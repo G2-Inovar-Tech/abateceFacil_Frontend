@@ -11,3 +11,7 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.MuiDrawer-paper {
+  transition: width 0.3s ease-in-out, transform 0.3s ease-in-out !important;
+}
