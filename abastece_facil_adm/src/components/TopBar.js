@@ -1,16 +1,22 @@
 import React from "react";
+import { useAuth } from "../context/AuthContext";
 import {
   AppBar,
   Toolbar,
   Typography,
   Stack,
+  Box,
   Avatar,
   IconButton,
 } from "@mui/material";
-import { Menu as MenuIcon } from "@mui/icons-material";
+import {
+  Menu as MenuIcon,
+  PowerSettingsNew as PowerOff,
+} from "@mui/icons-material";
 import imagemPerfil from "../assets/imagemPerfil.jpg";
 
 export default function TopBar({ open, handleDrawerToggle }) {
+  const { logout } = useAuth();
   return (
     <AppBar
       position="fixed"
@@ -42,9 +48,19 @@ export default function TopBar({ open, handleDrawerToggle }) {
         <Typography variant="h6" noWrap component="div" sx={{ width: "100%" }}>
           Abastece Fácil
         </Typography>
-        <Stack direction="row" spacing={2}>
-          <Avatar alt="Remy Sharp" src={imagemPerfil} />
-        </Stack>
+        <Box sx={{ display: "flex", flexDirection: "row" }}>
+          <Stack direction="row" spacing={2}>
+            <Avatar alt="Remy Sharp" src={imagemPerfil} />
+          </Stack>
+          <IconButton
+            onClick={logout}
+            // disabled={open}
+            // style={{ opacity: !open ? 1 : 0 }}
+          >
+            <Typography color="white">Sair</Typography>
+            <PowerOff style={{ color: "white" }} />
+          </IconButton>
+        </Box>
       </Toolbar>
     </AppBar>
   );

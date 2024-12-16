@@ -16,16 +16,16 @@ export default function Home() {
         sx={{
           flexGrow: 1, // Faz com que ocupe o restante do espaço vertical.
           backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
+          //backgroundSize: "cover",
+          //backgroundPosition: "center",
+          //backgroundRepeat: "no-repeat",
           backgroundColor: "rgba(255, 255, 255, 0.8)", // Cor branca com transparência.
           backgroundBlendMode: "overlay", // Mistura o background transparente com a imagem.
           padding: 3,
           borderRadius: 2,
           boxShadow: 3,
-          display: "flex",
-          flexDirection: "column",
+          //display: "flex",
+          //flexDirection: "column",
         }}
       >
         <Typography variant="h4" gutterBottom>

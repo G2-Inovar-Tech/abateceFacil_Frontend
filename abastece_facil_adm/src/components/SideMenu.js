@@ -20,6 +20,7 @@ import {
   BarChart as RelatoriosIcon,
   PersonAdd as CadastrarUsuariosIcon,
   Settings as ConfiguracoesIcon,
+  LocalGasStation as BombaCombustivelIcone,
 } from "@mui/icons-material";
 import iconeAbasteceFacil from "../assets/iconeAplicativoPrefeitura.png";
 
@@ -45,6 +46,11 @@ export default function SideMenu({ open, handleDrawerToggle }) {
       text: "Cadastrar Usuários",
       path: "/cadastro-usuario",
       icon: <CadastrarUsuariosIcon />,
+    },
+    {
+      text: "Cadastrar Posto",
+      path: "/cadastro-posto",
+      icon: <BombaCombustivelIcone />,
     },
     {
       text: "Configurações",

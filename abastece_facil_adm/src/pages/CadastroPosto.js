@@ -14,10 +14,10 @@ import {
 import MainLayout from "../components/MainLayout.js";
 import backgroundImage from "../assets/backgroundHome.png"; // Importa a imagem
 
-export default function CadastroUsuario() {
+export default function CadastroPosto() {
   const [formData, setFormData] = useState({
-    name: "",
-    type: "",
+    RazaoSocial: "",
+    Cnpj: "",
     status: "",
     login: "",
     email: "",
@@ -33,8 +33,8 @@ export default function CadastroUsuario() {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Nome é obrigatório.";
-    if (!formData.type) newErrors.type = "Tipo é obrigatório.";
+    if (!formData.RazaoSocial.trim()) newErrors.RazaoSocial = "Razão social é obrigatório.";
+    if (!formData.Cnpj.trim()) newErrors.Cnpj = "CNPJ é obrigatório.";
     if (!formData.status) newErrors.status = "Status é obrigatório.";
     if (!formData.login.trim()) newErrors.login = "Login é obrigatório.";
     if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email))
@@ -56,8 +56,8 @@ export default function CadastroUsuario() {
 
   const handleCancel = () => {
     setFormData({
-      name: "",
-      type: "",
+      RazaoSocial: "",
+      Cnpj: "",
       status: "",
       login: "",
       email: "",
@@ -92,45 +92,29 @@ export default function CadastroUsuario() {
             }}
           >
             <Typography variant="h4" component="h1" gutterBottom align="center">
-              Cadastro de Usuário
+              Cadastro de Posto
             </Typography>
             <form onSubmit={handleSubmit}>
               <TextField
                 fullWidth
-                label="Nome"
-                name="name"
-                value={formData.name}
+                label="Razão social"
+                name="RazaoSocial"
+                value={formData.RazaoSocial}
                 onChange={handleInputChange}
-                error={!!errors.name}
-                helperText={errors.name}
+                error={!!errors.RazaoSocial}
+                helperText={errors.RazaoSocial}
                 margin="normal"
               />
-
-              <FormControl component="fieldset" margin="normal" sx={{ marginRight: "100px" }}>
-                <FormLabel component="legend">Tipo</FormLabel>
-                <RadioGroup
-                  row
-                  name="type"
-                  value={formData.type}
-                  onChange={handleInputChange}
-                >
-                  <FormControlLabel
-                    value="Admin"
-                    control={<Radio />}
-                    label="Admin"
-                  />
-                  <FormControlLabel
-                    value="User"
-                    control={<Radio />}
-                    label="User"
-                  />
-                </RadioGroup>
-                {errors.type && (
-                  <Typography color="error" variant="body2">
-                    {errors.type}
-                  </Typography>
-                )}
-              </FormControl>
+              <TextField
+                fullWidth
+                label="CNPJ"
+                name="Cnpj"
+                value={formData.Cnpj}
+                onChange={handleInputChange}
+                error={!!errors.Cnpj}
+                helperText={errors.Cnpj}
+                margin="normal"
+              />
 
               <FormControl component="fieldset" margin="normal">
                 <FormLabel component="legend">Status</FormLabel>
