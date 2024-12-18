@@ -1,17 +1,17 @@
 {
   "files": {
     "main.css": "/abateceFacil_Frontend/static/css/main.6e78ad74.css",
-    "main.js": "/abateceFacil_Frontend/static/js/main.890c077a.js",
+    "main.js": "/abateceFacil_Frontend/static/js/main.b450aa7e.js",
     "static/js/453.87b15d78.chunk.js": "/abateceFacil_Frontend/static/js/453.87b15d78.chunk.js",
     "static/media/backgroundHome.png": "/abateceFacil_Frontend/static/media/backgroundHome.10f72c866e327a13147b.png",
     "static/media/iconeAplicativoPrefeitura.png": "/abateceFacil_Frontend/static/media/iconeAplicativoPrefeitura.b4572dcbdcf03f7b1c95.png",
     "index.html": "/abateceFacil_Frontend/index.html",
     "main.6e78ad74.css.map": "/abateceFacil_Frontend/static/css/main.6e78ad74.css.map",
-    "main.890c077a.js.map": "/abateceFacil_Frontend/static/js/main.890c077a.js.map",
+    "main.b450aa7e.js.map": "/abateceFacil_Frontend/static/js/main.b450aa7e.js.map",
     "453.87b15d78.chunk.js.map": "/abateceFacil_Frontend/static/js/453.87b15d78.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.6e78ad74.css",
-    "static/js/main.890c077a.js"
+    "static/js/main.b450aa7e.js"
   ]
 }
