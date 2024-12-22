@@ -14,10 +14,11 @@ import {
 import MainLayout from "../components/MainLayout.js";
 import backgroundImage from "../assets/backgroundHome.png"; // Importa a imagem
 
-export default function CadastroPosto() {
+export default function CadastroPrefeitura() {
   const [formData, setFormData] = useState({
     razaosocial: "",
     cnpj: "",
+    contrato: "",
     cep: "",
     uf: "",
     cidade: "",
@@ -41,6 +42,8 @@ export default function CadastroPosto() {
     if (!formData.razaosocial.trim())
       newErrors.razaosocial = "Razão social é obrigatório.";
     if (!formData.cnpj.trim()) newErrors.cnpj = "CNPJ é obrigatório.";
+    if (!formData.contrato.trim())
+      newErrors.contrato = "Número do contrato é obrigatório.";
     if (!formData.cep.trim()) newErrors.cep = "CEP é obrigatório.";
     if (!formData.uf.trim()) newErrors.uf = "UF é obrigatório.";
     if (!formData.cidade.trim()) newErrors.cidade = "Cidade é obrigatório.";
@@ -62,7 +65,7 @@ export default function CadastroPosto() {
     e.preventDefault();
     if (validate()) {
       console.log("Formulário enviado com sucesso!", formData);
-      alert("Posto cadastrado com sucesso!");
+      alert("Prefeitura cadastrado com sucesso!");
     }
   };
 
@@ -70,6 +73,7 @@ export default function CadastroPosto() {
     setFormData({
       razaosocial: "",
       cnpj: "",
+      contrato: "",
       cep: "",
       uf: "",
       cidade: "",
@@ -109,7 +113,7 @@ export default function CadastroPosto() {
             }}
           >
             <Typography variant="h4" component="h1" gutterBottom align="center">
-              Cadastro de Posto
+              Cadastro de Prefeitura
             </Typography>
             <form onSubmit={handleSubmit}>
               <TextField
@@ -122,16 +126,31 @@ export default function CadastroPosto() {
                 helperText={errors.razaosocial}
                 margin="normal"
               />
-              <TextField
-                fullWidth
-                label="CNPJ"
-                name="cnpj"
-                value={formData.cnpj}
-                onChange={handleInputChange}
-                error={!!errors.cnpj}
-                helperText={errors.cnpj}
-                margin="normal"
-              />
+              <Box sx={{ display: "flex", flexDirection: "row" }}>
+                <TextField
+                  fullWidth
+                  label="CNPJ"
+                  name="cnpj"
+                  value={formData.cnpj}
+                  onChange={handleInputChange}
+                  error={!!errors.cnpj}
+                  helperText={errors.cnpj}
+                  margin="normal"
+                  sx={{ minWidth: "60%", marginRight: "20px" }}
+                />
+
+                <TextField
+                  fullWidth
+                  label="Contrato"
+                  name="contrato"
+                  value={formData.contrato}
+                  onChange={handleInputChange}
+                  error={!!errors.contrato}
+                  helperText={errors.contrato}
+                  margin="normal"
+                  maxWidth="30%"
+                />
+              </Box>
               {/* ToDo: Criar um component Endereço */}
               <Box
                 sx={{
@@ -160,8 +179,7 @@ export default function CadastroPosto() {
                     error={!!errors.cidade}
                     helperText={errors.cidade}
                     margin="normal"
-                    maxWidth="40%"
-                    sx={{ marginRight: "20px" }}
+                    sx={{ minWidth: "60%", marginRight: "20px" }}
                   />
 
                   <TextField
@@ -173,7 +191,7 @@ export default function CadastroPosto() {
                     error={!!errors.uf}
                     helperText={errors.uf}
                     margin="normal"
-                    maxWidth="40%"
+                    maxWidth="30%"
                   />
                 </Box>
 
@@ -298,7 +316,7 @@ export default function CadastroPosto() {
     // <MainLayout>
     //   <Box>
     //     <Typography>Hello Word!</Typography>
-    //     <Typography>Cadastro de Posto</Typography>
+    //     <Typography>Cadastro de Prefeitura</Typography>
     //   </Box>
     // </MainLayout>
   );

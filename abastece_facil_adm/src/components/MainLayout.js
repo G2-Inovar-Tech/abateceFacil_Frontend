@@ -3,7 +3,7 @@ import { Box, CssBaseline, useMediaQuery } from "@mui/material";
 import TopBar from "../components/TopBar";
 import SideMenu from "../components/SideMenu";
 
-export default function MainLayout({ children }) {
+export default function MainLayout({ children, titlePage }) {
   const isMobile = useMediaQuery("(max-width:600px)"); // Detecta telas pequenas
 
   const [open, setOpen] = useState(isMobile? false : true);  // Começa aberto
@@ -18,7 +18,7 @@ export default function MainLayout({ children }) {
       <CssBaseline />
 
       {/* Barra Superior */}
-      <TopBar open={open} handleDrawerToggle={handleDrawerToggle} />
+      <TopBar open={open} handleDrawerToggle={handleDrawerToggle} title={titlePage}/>
 
       {/* Menu Lateral */}
       <SideMenu open={open} handleDrawerToggle={handleDrawerToggle} />

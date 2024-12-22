@@ -17,6 +17,9 @@ import {
   Menu as MenuIcon,
   Home as HomeIcon,
   Apartment as PrefeiturasIcon,
+  Add as AddIcon,
+  HomeWork as PrefeiturasIcon2,
+  AddHomeWork as AddPrefeiturasIcon2,
   BarChart as RelatoriosIcon,
   PersonAdd as CadastrarUsuariosIcon,
   Settings as ConfiguracoesIcon,
@@ -46,6 +49,11 @@ export default function SideMenu({ open, handleDrawerToggle }) {
       text: "Cadastrar Usuários",
       path: "/cadastro-usuario",
       icon: <CadastrarUsuariosIcon />,
+    },
+    {
+      text: "Cadastrar Prefeitura",
+      path: "/cadastro-prefeitura",
+      icon: <AddPrefeiturasIcon2 />,
     },
     {
       text: "Cadastrar Posto",

@@ -15,8 +15,9 @@ import {
 } from "@mui/icons-material";
 import imagemPerfil from "../assets/imagemPerfil.jpg";
 
-export default function TopBar({ open, handleDrawerToggle }) {
+export default function TopBar({ open, handleDrawerToggle, title }) {
   const { logout } = useAuth();
+  const titlePage = title? title : "Abastece Facil";
   return (
     <AppBar
       position="fixed"
@@ -46,7 +47,7 @@ export default function TopBar({ open, handleDrawerToggle }) {
           <MenuIcon style={{ color: "white" }} />
         </IconButton>
         <Typography variant="h6" noWrap component="div" sx={{ width: "100%" }}>
-          Abastece Fácil
+          {titlePage}
         </Typography>
         <Box sx={{ display: "flex", flexDirection: "row" }}>
           <Stack direction="row" spacing={2}>

@@ -9,6 +9,7 @@ import Home from "./pages/Home.js";
 import GerenciarPrefeituras from "./pages/GerenciarPrefeituras.js";
 import Relatorios from "./pages/Relatorios.js";
 import CadastroUsuario from "./pages/CadastroUsuario.js";
+import Cadastroprefeitura from "./pages/CadastroPrefeitura.js";
 import CadastroPosto from "./pages/CadastroPosto.js";
 import Configuracoes from "./pages/Configuracoes.js";
 
@@ -27,6 +28,7 @@ function App() {
             <Route path="/gerenciar-prefeituras" element={<GerenciarPrefeituras />} />
             <Route path="/relatorios" element={<Relatorios />} />
             <Route path="/cadastro-usuario" element={<CadastroUsuario />} />
+            <Route path="/cadastro-prefeitura" element={<Cadastroprefeitura />} />
             <Route path="/cadastro-posto" element={<CadastroPosto />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
           </Route>

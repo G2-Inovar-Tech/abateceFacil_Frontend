@@ -109,7 +109,7 @@ export default function CadastroUsuario() {
               <FormControl component="fieldset" margin="normal" sx={{ marginRight: "100px" }}>
                 <FormLabel component="legend">Tipo</FormLabel>
                 <RadioGroup
-                  row
+                  //row
                   name="type"
                   value={formData.type}
                   onChange={handleInputChange}
@@ -120,9 +120,14 @@ export default function CadastroUsuario() {
                     label="Admin"
                   />
                   <FormControlLabel
-                    value="User"
+                    value="Prefeitura" //User
                     control={<Radio />}
-                    label="User"
+                    label="Prefeitura"
+                  />
+                  <FormControlLabel
+                    value="Posto"
+                    control={<Radio />}
+                    label="Posto"
                   />
                 </RadioGroup>
                 {errors.type && (
