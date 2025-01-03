@@ -13,13 +13,19 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Checkbox,
 } from "@mui/material";
 import {
   Search as SearchIcon,
   AddCard as AddCardIcon,
+  CreditCard as CardIcon,
+  Edit as EditIcon,
+  DeleteOutline as DeleteIcon,
 } from "@mui/icons-material";
 import MainLayout from "../components/MainLayout.js";
 import SelectCartoes from "../components/SelectCartoes.js";
+import ModalGerarEditarCard from "../components/ModalGerarEditarCard.js";
+import ModalConfirmacao from "../components/ModalConfirmacao.js";
 import backgroundImage from "../assets/backgroundHome.png"; // Importa a imagem
 import { styled } from "@mui/material/styles";
 
@@ -62,6 +68,13 @@ export default function GerenciarPrefeituras() {
   const [saldoTransacao, setSaldoTransacao] = useState(0);
   const [cartaoDestino, setCartaoDestino] = useState();
   const [saldoText, setSaldoText] = useState("");
+
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("gerar"); // "gerar" ou "editar"
+  const [cardData, setCardData] = useState(null);
+  const [responsavel, setResponsavel] = useState("Fulano");
+  const [statusCartao, setStatusCartao] = useState(true);
+  const [isModalConfirmacaoOpen, setModalConfirmacaoOpen] = useState(false);
 
   const buscarPrefeitura = () => {
     // ToDo: Fazer as requisiçoes para buscar as informações da prefeitura.
@@ -147,6 +160,32 @@ export default function GerenciarPrefeituras() {
       setSaldoText("");
       setSaldoTransacao(0);
       setDesabilitarSalvar(true);
+    }
+  };
+
+  const handleOpenModalGerarEditarCard = (mode, data = null) => { // Abrir modal Gerar/Editar cartão
+    setModalMode(mode);
+    setCardData(data);
+    setModalOpen(true);
+  };
+  const handleCloseModalGerarEditarCard = () => setModalOpen(false); // Fecar modal Gerar/Editar cartão
+  const handleFormSubmit = (formData) => { // Aplicar edição de cartão na propria pagina
+    if (modalMode === "editar") {
+      console.log("Dados recebidos do modal:", formData);
+      setResponsavel(formData?.responsavel);
+      setCartaoSelecionado({
+        label: formData?.setor,
+        num_cartao: cartaoSelecionado?.num_cartao,
+      });
+    }
+  };
+
+  const handleOpenModalConfirmacao = () => setModalConfirmacaoOpen(true); // Abrir modal de confirmação
+  const handleCloseModalConfirmacao = () => setModalConfirmacaoOpen(false); // Fechar modal de confirmação
+  const handleModalConfirmacao = (confirmed) => { // Aplicar confirmação de (des)bloqueio de cartão
+    if (confirmed) {
+      setStatusCartao(!statusCartao);
+      console.log("Ação confirmada!");
     }
   };
 
@@ -263,152 +302,237 @@ export default function GerenciarPrefeituras() {
                     color="primary"
                     size="small"
                     sx={{ p: "10px", maxHeight: "30px" }}
-                    onClick={buscarPrefeitura}
+                    onClick={() =>
+                      handleOpenModalGerarEditarCard("gerar", {
+                        setor: "",
+                        responsavel: "",
+                      })
+                    }
                   >
                     <AddCardIcon sx={{ marginRight: "5px" }} />
-                    {isMobile ? "" : "Criar novo cartão"}
+                    Gerar cartão
                   </IconButton>
                 </Box>
+                <ModalGerarEditarCard
+                  open={isModalOpen}
+                  onClose={handleCloseModalGerarEditarCard}
+                  mode={modalMode} //"gerar" // ou "editar"
+                  cardNumber={
+                    modalMode === "editar" ? cartaoSelecionado?.num_cartao : ""
+                  }
+                  initialData={cardData}
+                  onSubmit={handleFormSubmit}
+                />
                 {cartaoSelecionado ? (
-                  <Box
-                    sx={{
-                      margin: "10px 0",
-                      padding: "5px",
-                      backgroundColor: "#FFFFFF",
-                      borderRadius: "5px",
-                    }}
-                  >
-                    <Typography variant="h6" align="center">
-                      Informações do cartão
-                    </Typography>
-                    <Divider sx={{ margin: "5px 0", borderRadius: "20px" }} />
+                  <Box>
+                    <Box>
+                      <IconButton
+                        type="button"
+                        aria-label="Criar cartão"
+                        size="small"
+                        sx={{ p: "10px", maxHeight: "30px", color: "#2e86c1" }}
+                        onClick={() => {
+                          handleOpenModalGerarEditarCard("editar", {
+                            setor: cartaoSelecionado.label,
+                            responsavel: responsavel,
+                          });
+                        }}
+                      >
+                        <CardIcon sx={{ marginRight: "5px" }} />
+                        <EditIcon
+                          sx={{
+                            fontSize: "18px",
+                            marginLeft: "-18px",
+                            marginRight: "5px",
+                          }}
+                        />
+                        Editar cartão
+                      </IconButton>
+                      <IconButton
+                        type="button"
+                        aria-label="Criar cartão"
+                        size="small"
+                        sx={{ p: "10px", maxHeight: "30px", color: "#cb4335" }}
+                        onClick={buscarPrefeitura}
+                      >
+                        <DeleteIcon />
+                        <CardIcon
+                          sx={{
+                            fontSize: "12px",
+                            marginLeft: "-14px",
+                            marginBottom: "-5px",
+                            marginRight: "5px",
+                          }}
+                        />
+                        Excluir cartão
+                      </IconButton>
+                    </Box>
                     <Box
                       sx={{
-                        display: "flex",
-                        flexDirection: "row",
-                        justifyContent: "space-between",
+                        margin: "10px 0",
+                        padding: "5px",
+                        backgroundColor: "#FFFFFF",
+                        borderRadius: "5px",
                       }}
                     >
-                      <Typography variant="body1">
-                        Número do cartão: 1234 5678 9123 4567 8912 <br />
-                        Setor: {cartaoSelecionado.label} <br />
-                        Responsavel: Fulano <br />
-                        Status: Ativo
+                      {/*ToDo: Adicionar flag de bloquear cartão*/}
+                      <Typography variant="h6" align="center">
+                        Informações do cartão
                       </Typography>
-                      <Typography variant="body1" align="right">
-                        Saldo do cartão: R$ 200,00 <br />
-                      </Typography>
-                    </Box>
-                    <Divider
-                      sx={{
-                        margin: "5px 0",
-                        borderRadius: "20px",
-                        borderBottomWidth: "medium",
-                      }}
-                    />
-                    <Typography variant="h6" align="center">
-                      Operações com o cartão
-                    </Typography>
-                    <Box sx={{ display: "flex", justifyContent: "center" }}>
-                      <RadioGroup
-                        row={isMobile ? false : true}
-                        name="row-radio-buttons-group"
-                        value={selectedOption}
-                        onChange={handleOptionChange}
+                      <Divider sx={{ margin: "5px 0", borderRadius: "20px" }} />
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                        }}
                       >
-                        <FormControlLabel
-                          value="adicionarSaldo"
-                          control={<Radio />}
-                          label="Adicionar saldo"
-                        />
-                        <FormControlLabel
-                          value="transferirSaldo"
-                          control={<Radio />}
-                          label="Transferir Saldo"
-                        />
-                        <FormControlLabel
-                          value="removerSaldo"
-                          control={<Radio />}
-                          label="Remover Saldo"
-                        />
-                      </RadioGroup>
-                    </Box>
-                    {selectedOption === "adicionarSaldo" && (
-                      <Box>
-                        <TextField
-                          label="Saldo R$"
-                          value={saldoText}
-                          onChange={ValidarCampoMoeda}
-                          variant="outlined"
-                          sx={{
-                            width: isMobile ? "100%" : 320,
-                          }}
-                          margin="normal"
-                        />
-                      </Box>
-                    )}
-
-                    {selectedOption === "transferirSaldo" && (
-                      <Box sx={{ width: isMobile ? "100%" : "none" }}>
-                        <TextField
-                          label="Saldo R$"
-                          value={saldoText}
-                          onChange={ValidarCampoMoeda}
-                          variant="outlined"
-                          sx={{
-                            width: isMobile ? "100%" : 320,
-                          }}
-                          margin="normal"
-                        />
-                        <Typography variant="subtitle1">
-                          Para o cartão:
+                        <Typography variant="body1">
+                          Número do cartão: 1234 5678 9123 4567 8912 <br />
+                          Número do cartão: {cartaoSelecionado?.num_cartao}{" "}
+                          <br />
+                          Setor: {cartaoSelecionado?.label} <br />
+                          Responsável: {responsavel} <br />
+                          Status: {statusCartao ? "Ativo" : "Bloqueado"}
                         </Typography>
-                        <SelectCartoes
-                          cartaoSelecionado={cartaoDestino}
-                          cartoes={cartoes}
-                          setCartaoSelecionado={setarCartaoDestino}
-                          title="Cartão destinatário"
-                        />
+                        <Typography variant="body1" align="right">
+                          Saldo do cartão: R$ 200,00 <br />
+                        </Typography>
                       </Box>
-                    )}
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={!statusCartao}
+                            onChange={handleOpenModalConfirmacao}
+                            name="statusCartao"
+                          />
+                        }
+                        label={
+                          statusCartao ? "Bloquear cartão" : "Cartão bloqueado"
+                        }
+                      />
+                      <ModalConfirmacao
+                        open={isModalConfirmacaoOpen}
+                        onClose={handleCloseModalConfirmacao}
+                        title="Confirmar Ação"
+                        content={
+                          statusCartao
+                            ? "Você tem certeza que deseja realizar o BLOQUEIO do cartão?"
+                            : "Você tem certeza que deseja realizar o DESBLOQUEIO do cartão?"
+                        }
+                        onConfirm={handleModalConfirmacao}
+                      />
+                      <Divider
+                        sx={{
+                          margin: "5px 0",
+                          borderRadius: "20px",
+                          borderBottomWidth: "medium",
+                        }}
+                      />
+                      <Typography variant="h6" align="center">
+                        Operações com o cartão
+                      </Typography>
+                      <Box sx={{ display: "flex", justifyContent: "center" }}>
+                        <RadioGroup
+                          row={isMobile ? false : true}
+                          name="row-radio-buttons-group"
+                          value={selectedOption}
+                          onChange={handleOptionChange}
+                        >
+                          <FormControlLabel
+                            value="adicionarSaldo"
+                            control={<Radio />}
+                            label="Adicionar saldo"
+                          />
+                          <FormControlLabel
+                            value="transferirSaldo"
+                            control={<Radio />}
+                            label="Transferir Saldo"
+                          />
+                          <FormControlLabel
+                            value="removerSaldo"
+                            control={<Radio />}
+                            label="Remover Saldo"
+                          />
+                        </RadioGroup>
+                      </Box>
+                      {selectedOption === "adicionarSaldo" && (
+                        <Box>
+                          <TextField
+                            label="Saldo R$"
+                            value={saldoText}
+                            onChange={ValidarCampoMoeda}
+                            variant="outlined"
+                            sx={{
+                              width: isMobile ? "100%" : 320,
+                            }}
+                            margin="normal"
+                          />
+                        </Box>
+                      )}
 
-                    {selectedOption === "removerSaldo" && (
-                      <Box>
-                        <TextField
-                          label="Saldo R$"
-                          value={saldoText}
-                          onChange={ValidarCampoMoeda}
+                      {selectedOption === "transferirSaldo" && (
+                        <Box sx={{ width: isMobile ? "100%" : "none" }}>
+                          <TextField
+                            label="Saldo R$"
+                            value={saldoText}
+                            onChange={ValidarCampoMoeda}
+                            variant="outlined"
+                            sx={{
+                              width: isMobile ? "100%" : 320,
+                            }}
+                            margin="normal"
+                          />
+                          <Typography variant="subtitle1">
+                            Para o cartão:
+                          </Typography>
+                          <SelectCartoes
+                            cartaoSelecionado={cartaoDestino}
+                            cartoes={cartoes}
+                            setCartaoSelecionado={setarCartaoDestino}
+                            title="Cartão destinatário"
+                          />
+                        </Box>
+                      )}
+
+                      {selectedOption === "removerSaldo" && (
+                        <Box>
+                          <TextField
+                            label="Saldo R$"
+                            value={saldoText}
+                            onChange={ValidarCampoMoeda}
+                            variant="outlined"
+                            sx={{
+                              width: isMobile ? "100%" : 320,
+                            }}
+                            margin="normal"
+                          />
+                        </Box>
+                      )}
+                      <Box //Box Botões de controle: Salvar e Cancelar
+                        sx={{
+                          mt: 3,
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Button
+                          type="submit"
+                          variant="contained"
+                          color="primary"
+                          disabled={desabilitarSalvar}
+                        >
+                          {labelBotaoSalvar}
+                        </Button>
+                        <Button
+                          type="button"
                           variant="outlined"
-                          sx={{
-                            width: isMobile ? "100%" : 320,
-                          }}
-                          margin="normal"
-                        />
+                          color="secondary"
+                          onClick={handleCancel}
+                        >
+                          Cancelar
+                        </Button>
                       </Box>
-                    )}
-                    <Box //Box Botões de controle: Salvar e Cancelar
-                      sx={{
-                        mt: 3,
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Button
-                        type="submit"
-                        variant="contained"
-                        color="primary"
-                        disabled={desabilitarSalvar}
-                      >
-                        {labelBotaoSalvar}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outlined"
-                        color="secondary"
-                        onClick={handleCancel}
-                      >
-                        Cancelar
-                      </Button>
                     </Box>
                   </Box>
                 ) : (
