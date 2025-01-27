@@ -25,9 +25,15 @@ export default function Login() {
   
   const navigate = useNavigate();
   
-  const handleAccess = () => {
-    const redirectTo = location.state?.from?.pathname || "/home";
-    navigate(redirectTo); // Navega para a página Home
+  const handleAccess = (profile) => {
+    if(profile === "ADM") {
+      const redirectTo = location.state?.from?.pathname || "/home";
+      navigate(redirectTo); // Navega para a página Home
+    }
+    else if(profile === "PRE") {
+      const redirectTo = location.state?.from?.pathname || "/home-prefeitura";
+      navigate(redirectTo); // Navega para a página HomePrefeitura
+    }
   };
 
   const handleInputChange = (e) => {
@@ -45,12 +51,23 @@ export default function Login() {
   };
 
   const handleSubmit = (e) => {
+    let profile = "";
     e.preventDefault();
     if (validate()) {
       console.log("Login enviado:", formData);
       //alert('Bem-vindo ao sistema!');
-      login(rememberMe);
-      handleAccess();
+      if (formData.username === "adm" && formData.password === "1") {
+        //login("ADM");
+        login(rememberMe, "ADM");
+        profile = "ADM";
+      } else if (formData.username === "pre" && formData.password === "2") {
+        //login("PREFEITURA");
+        login(rememberMe, "PREFEITURA");
+        profile = "PRE";
+      } else {
+        alert("Usuário ou senha inválidos");
+      }
+      handleAccess(profile);
       // Lógica de autenticação a ser implementada
     }
   };

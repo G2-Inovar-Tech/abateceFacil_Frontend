@@ -13,26 +13,30 @@ import {
   Typography,
   useMediaQuery,
 } from "@mui/material";
+import { useAuth } from "../context/AuthContext"; 
 import {
   Menu as MenuIcon,
   Home as HomeIcon,
   Apartment as PrefeiturasIcon,
-  Add as AddIcon,
-  HomeWork as PrefeiturasIcon2,
+  // Add as AddIcon,
+  // HomeWork as PrefeiturasIcon2,
   AddHomeWork as AddPrefeiturasIcon2,
   BarChart as RelatoriosIcon,
   PersonAdd as CadastrarUsuariosIcon,
   Settings as ConfiguracoesIcon,
   LocalGasStation as BombaCombustivelIcone,
+  History as HistoryIcon,
 } from "@mui/icons-material";
+//import HistoryIcon from '@mui/icons-material/History';
 import iconeAbasteceFacil from "../assets/iconeAplicativoPrefeitura.png";
 
 const drawerWidth = 240;
 
 export default function SideMenu({ open, handleDrawerToggle }) {
+  const { userProfile } = useAuth(); // Obtém o perfil do usuário autenticado
   const isMobile = useMediaQuery("(max-width:600px)"); // Detecta telas pequenas
 
-  const menuItems = [
+  const adminMenuItems = [
     // "Overview",
     // "Gerenciar Prefeituras",
     // "Cadastro de Usuários",
@@ -66,6 +70,24 @@ export default function SideMenu({ open, handleDrawerToggle }) {
       icon: <ConfiguracoesIcon />,
     },
   ];
+
+  // Itens do menu para Prefeitura
+  const prefeituraMenuItems = [
+    { text: "Overview", path: "/home-prefeitura", icon: <HomeIcon /> },
+    {
+      text: "Gerenciar Saldos e Cartões",
+      path: "/gestao-saldos-cartoes",
+      icon: <PrefeiturasIcon />,
+    },
+    {
+      text: "Historico",
+      path: "/historico-prefeitura",
+      icon: <HistoryIcon />,
+    },
+  ];
+
+  // Define os itens do menu com base no perfil
+  const menuItems = userProfile === "ADM" ? adminMenuItems : prefeituraMenuItems;
 
   return (
     <>
