@@ -9,10 +9,8 @@ export const AuthProvider = ({ children }) => {
       sessionStorage.getItem("isAuthenticated");
     return storedAuth === "true"; // Retorna true se estiver autenticado
   });
-  // const [userProfile, setUserProfile] = useState(null); // 'ADM' ou 'PREFEITURA'
-
-  //const [isProfile, setIsProfile] = useState(() => {
-  const [userProfile, setUserProfile] = useState(() => {
+  
+  const [userProfile, setUserProfile] = useState(() => { // 'ADM' ou 'PREFEITURA'
     const storedProfile =
       localStorage.getItem("profile") ||
       sessionStorage.getItem("profile");

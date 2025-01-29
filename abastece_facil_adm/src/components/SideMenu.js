@@ -18,8 +18,6 @@ import {
   Menu as MenuIcon,
   Home as HomeIcon,
   Apartment as PrefeiturasIcon,
-  // Add as AddIcon,
-  // HomeWork as PrefeiturasIcon2,
   AddHomeWork as AddPrefeiturasIcon2,
   BarChart as RelatoriosIcon,
   PersonAdd as CadastrarUsuariosIcon,
@@ -27,7 +25,6 @@ import {
   LocalGasStation as BombaCombustivelIcone,
   History as HistoryIcon,
 } from "@mui/icons-material";
-//import HistoryIcon from '@mui/icons-material/History';
 import iconeAbasteceFacil from "../assets/iconeAplicativoPrefeitura.png";
 
 const drawerWidth = 240;
@@ -37,11 +34,6 @@ export default function SideMenu({ open, handleDrawerToggle }) {
   const isMobile = useMediaQuery("(max-width:600px)"); // Detecta telas pequenas
 
   const adminMenuItems = [
-    // "Overview",
-    // "Gerenciar Prefeituras",
-    // "Cadastro de Usuários",
-    // "Relatórios",
-    // "Configurações",
     { text: "Overview", path: "/home", icon: <HomeIcon /> },
     {
       text: "Gerenciar Prefeituras",

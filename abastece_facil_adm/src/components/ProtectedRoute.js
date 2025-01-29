@@ -10,6 +10,8 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
+  /** Esse allowedRoles recebe qual perfil é permitido para a rota que está tentando acessar
+   * e o If verifica se é compativel com o perfil do usuario logado!*/
   if (!allowedRoles.includes(userProfile)) {
     if (userProfile === "ADM") {
       return <Navigate to="/home" replace />;
@@ -20,6 +22,9 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   return <Outlet />;
 
+  /** Primeira implementação de autenticação da aplicação - Depois com,  a necessidade de perfis,
+   * ficou obsoleto está implementação.
+   */
   // return isAuthenticated ? (
   //   <Outlet />
   // ) : (
