@@ -9,6 +9,7 @@ import {
   Container,
   Box,
   Typography,
+  Stack, 
   Divider,
   RadioGroup,
   FormControlLabel,
@@ -16,50 +17,33 @@ import {
   Checkbox,
 } from "@mui/material";
 import {
-  Search as SearchIcon,
-  AddCard as AddCardIcon,
   CreditCard as CardIcon,
   Edit as EditIcon,
-  DeleteOutline as DeleteIcon,
 } from "@mui/icons-material";
 import MainLayout from "../components/MainLayout.js";
 import SelectCartoes from "../components/SelectCartoes.js";
 import ModalGerarEditarCard from "../components/ModalGerarEditarCard.js";
 import ModalConfirmacao from "../components/ModalConfirmacao.js";
 import backgroundImage from "../assets/backgroundHome.png"; // Importa a imagem
-import { styled } from "@mui/material/styles";
+//import { styled } from "@mui/material/styles";
 
 export default function GestaoDosSaldosECartoes() {
   const isMobile = useMediaQuery("(max-width:600px)"); // Detecta telas pequenas
-
-   const Prefeituras = [
-    { label: "Prefeitura de São Paulo", Codigo: 1995 },
-    { label: "Prefeitura do Rio de Janeiro", Codigo: 1994 },
-    { label: "Prefeitura de Jequié", Codigo: 1993 },
-    { label: "Prefeitura do Rio de Contas", Codigo: 1972 },
-    { label: "Prefeitura de Salvador", Codigo: 1974 },
-    { label: "Prefeitura de Ipiaú", Codigo: 2008 },
-    { label: "Prefeitura de Jitauna", Codigo: 1957 },
-    { label: "Prefeitura de Itabuna", Codigo: 1993 },
-    { label: "Prefeitura de Jaguaguara", Codigo: 1996 },
-  ];
-
+  
   const cartoes = [
     //Limitar Label dos cartões até no máximo 30 caracteres
-    { label: "Geral", num_cartao: "**** **** **** **** 1234" },
-    { label: "Secretaria da Saúde", num_cartao: "**** **** **** **** 2134" },
+    { label: "Geral", num_cartao: "1234" },
+    { label: "Secretaria da Saúde", num_cartao: "2134" },
     {
       label: "Secretaria da Educação",
-      num_cartao: "**** **** **** **** 3124",
+      num_cartao: "3124",
     },
     {
       label: "Secretaria de infraestrutura qwe",
-      num_cartao: "**** **** **** **** 4123",
+      num_cartao: "4123",
     },
   ];
 
-  const [title, setTitle] = useState("");
-  const [prefeitura, setPrefeitura] = useState();
   const [cartaoSelecionado, setCartaoSelecionado] = useState();
   const [selectedOption, setSelectedOption] = useState("");
   const [desabilitarSalvar, setDesabilitarSalvar] = useState(true);
@@ -75,19 +59,6 @@ export default function GestaoDosSaldosECartoes() {
   const [responsavel, setResponsavel] = useState("Fulano");
   const [statusCartao, setStatusCartao] = useState(true);
   const [isModalConfirmacaoOpen, setModalConfirmacaoOpen] = useState(false);
-
-  const buscarPrefeitura = () => {
-    // ToDo: Fazer as requisiçoes para buscar as informações da prefeitura.
-
-    //if (prefeitura) setTitle("Gerenciando: " + prefeitura?.label);
-    setCartaoSelecionado();
-    if (prefeitura) {
-      setTitle(prefeitura?.label);
-    }
-    else setTitle("");
-
-    console.log("Você pesquisou por:", prefeitura);
-  };
 
   const handleCancel = () => {
     //setTitle("");
@@ -191,47 +162,6 @@ export default function GestaoDosSaldosECartoes() {
 
   return (
     <MainLayout titlePage={"Abastece Fácil - Prefeitura de Abaira"}>
-      {/* <Paper //Componente para buscar Prefeituras
-        component="form"
-        elevation={18}
-        sx={{
-          //p: "2px 4px",
-          paddingRight: "4px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          //width: 400,
-          marginBottom: "20px",
-          borderRadius: "15px",
-        }}
-      >
-        <StyledAutocomplete
-          disablePortal
-          options={Prefeituras}
-          value={prefeitura}
-          onChange={(event, newValue) => {
-            setPrefeitura(newValue);
-          }}
-          renderInput={(params) => (
-            <StyledTextField
-              {...params}
-              label="Buscar Prefeitura"
-              variant="filled"
-            />
-          )}
-        />
-        <IconButton
-          type="button"
-          sx={{ p: "10px" }}
-          aria-label="search"
-          onClick={buscarPrefeitura}
-        >
-          <SearchIcon />
-        </IconButton>
-      </Paper> */}
-      {/* <Typography variant="h4" gutterBottom sx={{ fontWeight: "600" }}>
-        Gestão de cartões e Saldos
-      </Typography> */}
       <Box
         sx={{
           backgroundImage: `url(${backgroundImage})`,
@@ -243,26 +173,88 @@ export default function GestaoDosSaldosECartoes() {
           padding: isMobile ? 1 : 3,
           borderRadius: 2,
           boxShadow: 3,
+          //justifyContent: "center",
         }}
       >
-        <Typography variant="h4" gutterBottom>
-          Gestão de cartões e Saldos
+        <Typography variant="h4" align="center">
+          Gestão dos cartões e Saldos
         </Typography>
-        <Box //Nome da prefeitura e saldo geral
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
-          <Typography variant="h5" component="h1" gutterBottom align="left">
-            {title}
-          </Typography>
-          <Typography variant="h6" component="h1" gutterBottom align="right">
-            Saldo atual: R$ 1.000,00
-          </Typography>
-        </Box>
-        <Container maxWidth="md" sx={{ padding: "5% 1%" }}>
+        <Container maxWidth="md" sx={{ padding: "1% 1%" }}>
+          <Box sx={{ p: 4, justifyContent: "center", padding: 0 }}>
+            <Paper
+              elevation={3}
+              sx={{ p: 3, borderRadius: 2, padding: "0.5% 0%" }}
+            >
+              <Stack
+                direction={{ xs: "column", md: "row" }}
+                justifyContent="space-around"
+                alignItems="center"
+                textAlign="center"
+              >
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <Typography variant="body1" color="primary">
+                    Saldo de contrato restante:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    R$ 155.000,00
+                  </Typography>
+                </Box>
+                <Box //Linha vertical (não exibe no mobile)
+                  sx={{
+                    display: { xs: "none", md: "block" },
+                    height: "40px",
+                    borderLeft: "2px solid #ccc",
+                  }}
+                />
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <Typography variant="body1" color="primary">
+                    Saldo livre:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    R$ 1.000,00
+                  </Typography>
+                </Box>
+                <Box //Linha vertical (não exibe no mobile)
+                  sx={{
+                    display: { xs: "none", md: "block" },
+                    height: "40px",
+                    borderLeft: "2px solid #ccc",
+                  }}
+                />
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <Typography variant="body1" color="primary">
+                    Saldos nos cartões:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    R$ 1.000,00
+                  </Typography>
+                </Box>
+              </Stack>
+            </Paper>
+          </Box>
+        </Container>
+        <Container maxWidth="md" sx={{ padding: "3% 1%" }}>
           <Box //Container:  Gerenciamento da prefeitura
             sx={{
               p: 4,
@@ -279,7 +271,7 @@ export default function GestaoDosSaldosECartoes() {
                 display: "flex",
                 flexDirection: "row",
                 justifyContent: isMobile ? "flex-end" : "space-between",
-                flexWrap: "wrap-reverse",
+                flexWrap: "wrap",
                 alignItems: "start",
               }}
             >
@@ -295,22 +287,65 @@ export default function GestaoDosSaldosECartoes() {
                   title="Cartões"
                 />
               </Box>
-              {/* <IconButton
-                type="button"
-                aria-label="Criar cartão"
-                color="primary"
-                size="small"
-                sx={{ p: "10px", maxHeight: "30px" }}
-                onClick={() =>
-                  handleOpenModalGerarEditarCard("gerar", {
-                    setor: "",
-                    responsavel: "",
-                  })
-                }
+              {cartaoSelecionado ? (
+                // <Box
+                //   sx={{
+                //     flex: 0.8,
+                //     backgroundColor: "#dddddd",
+                //     borderRadius: 5,
+                //     padding: 1,
+                //   }}
+                // >
+                //   <Typography variant="body1" align="center">
+                //     Cartão selecionado: Nº {cartaoSelecionado?.num_cartao}
+                //   </Typography>
+                //   <Box
+                //     sx={{
+                //       display: "flex",
+                //       flexDirection: "row",
+                //       justifyContent: "space-between",
+                //     }}
+                //   >
+                //     <Typography variant="body2">
+                //       Setor: {cartaoSelecionado?.label} <br />
+                //       Responsável: {responsavel} <br />
+                //       Status: {statusCartao ? "Ativo" : "Bloqueado"}
+                //     </Typography>
+                //   </Box>
+                // </Box>
+                <Box
+                sx={{
+                  flex: 0.8,
+                  backgroundColor: "#f5f5f5",
+                  borderRadius: "12px",
+                  padding: "6px",
+                  boxShadow: "1px 1px 5px rgba(0, 0, 0, 0.1)",
+                }}
               >
-                <AddCardIcon sx={{ marginRight: "5px" }} />
-                Gerar cartão
-              </IconButton> */}
+                <Typography variant="body1" align="center" fontWeight="bold" color="primary">
+                  Cartão Selecionado: Nº {cartaoSelecionado?.num_cartao}
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    //marginTop: 1,
+                    //gap: 1,
+                  }}
+                >
+                  <Typography variant="body2">
+                    <strong>Setor:</strong> {cartaoSelecionado?.label} <br />
+                    <strong>Responsável:</strong> {responsavel} <br />
+                    <strong>Status:</strong> {statusCartao ? "Ativo" : "Bloqueado"}
+                  </Typography>
+                </Box>
+              </Box>
+              
+              ) : (
+                <></>
+              )}
             </Box>
             <ModalGerarEditarCard
               open={isModalOpen}
@@ -329,7 +364,14 @@ export default function GestaoDosSaldosECartoes() {
                     type="button"
                     aria-label="Criar cartão"
                     size="small"
-                    sx={{ p: "10px", maxHeight: "30px", color: "#2e86c1" }}
+                    sx={{
+                      p: "1px",
+                      maxHeight: "28px",
+                      color: "#2e86c1",
+                      backgroundColor: "#FFF",
+                      borderRadius: "5px",
+                      marginRight: "25px",
+                    }}
                     onClick={() => {
                       handleOpenModalGerarEditarCard("editar", {
                         setor: cartaoSelecionado.label,
@@ -345,58 +387,8 @@ export default function GestaoDosSaldosECartoes() {
                         marginRight: "5px",
                       }}
                     />
-                    Editar cartão
+                    <Typography size="20px">Editar cartão</Typography>
                   </IconButton>
-                  {/* <IconButton
-                    type="button"
-                    aria-label="Criar cartão"
-                    size="small"
-                    sx={{ p: "10px", maxHeight: "30px", color: "#cb4335" }}
-                    onClick={buscarPrefeitura}
-                  >
-                    <DeleteIcon />
-                    <CardIcon
-                      sx={{
-                        fontSize: "12px",
-                        marginLeft: "-14px",
-                        marginBottom: "-5px",
-                        marginRight: "5px",
-                      }}
-                    />
-                    Excluir cartão
-                  </IconButton> */}
-                </Box>
-                <Box
-                  sx={{
-                    margin: "10px 0",
-                    padding: "5px",
-                    backgroundColor: "#FFFFFF",
-                    borderRadius: "5px",
-                  }}
-                >
-                  {/*ToDo: Adicionar flag de bloquear cartão*/}
-                  <Typography variant="h6" align="center">
-                    Informações do cartão
-                  </Typography>
-                  <Divider sx={{ margin: "5px 0", borderRadius: "20px" }} />
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Typography variant="body1">
-                      Número do cartão: 1234 5678 9123 4567 8912 <br />
-                      Número do cartão: {cartaoSelecionado?.num_cartao} <br />
-                      Setor: {cartaoSelecionado?.label} <br />
-                      Responsável: {responsavel} <br />
-                      Status: {statusCartao ? "Ativo" : "Bloqueado"}
-                    </Typography>
-                    <Typography variant="body1" align="right">
-                      Saldo do cartão: R$ 200,00 <br />
-                    </Typography>
-                  </Box>
                   <FormControlLabel
                     control={
                       <Checkbox
@@ -409,27 +401,124 @@ export default function GestaoDosSaldosECartoes() {
                       statusCartao ? "Bloquear cartão" : "Cartão bloqueado"
                     }
                   />
-                  <ModalConfirmacao
-                    open={isModalConfirmacaoOpen}
-                    onClose={handleCloseModalConfirmacao}
-                    title="Confirmar Ação"
-                    content={
-                      statusCartao
-                        ? "Você tem certeza que deseja realizar o BLOQUEIO do cartão?"
-                        : "Você tem certeza que deseja realizar o DESBLOQUEIO do cartão?"
-                    }
-                    onConfirm={handleModalConfirmacao}
-                  />
+                </Box>
+                <ModalConfirmacao
+                  open={isModalConfirmacaoOpen}
+                  onClose={handleCloseModalConfirmacao}
+                  title="Confirmar Ação"
+                  content={
+                    statusCartao
+                      ? "Você tem certeza que deseja realizar o BLOQUEIO do cartão?"
+                      : "Você tem certeza que deseja realizar o DESBLOQUEIO do cartão?"
+                  }
+                  onConfirm={handleModalConfirmacao}
+                />
+                <Box
+                  sx={{
+                    margin: "10px 0",
+                    padding: "5px",
+                    backgroundColor: "#FFFFFF",
+                    borderRadius: "5px",
+                  }}
+                >
+                  {/* <Typography variant="h6" align="center">
+                    Saldos do cartão
+                  </Typography>
+                  <Divider sx={{ margin: "5px 0", borderRadius: "20px" }} />
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  > */}
+                  {/* <Typography variant="body1">
+                      Número do cartão: {cartaoSelecionado?.num_cartao} <br />
+                      Setor: {cartaoSelecionado?.label} <br />
+                      Responsável: {responsavel} <br />
+                      Status: {statusCartao ? "Ativo" : "Bloqueado"}
+                    </Typography> */}
+                  {/* <Typography variant="body1" align="right">
+                      Etanol: R$ 200,00 <br />
+                      Gasolina comum: R$ 200,00 <br />
+                      Gasolina aditivada: R$ 200,00 <br />
+                      Diesel S10: R$ 200,00 <br />
+                      Diesel S500: R$ 200,00 <br />
+                      ARLA32: R$ 200,00 <br />
+                    </Typography>
+                  </Box>
                   <Divider
                     sx={{
                       margin: "5px 0",
                       borderRadius: "20px",
                       borderBottomWidth: "medium",
                     }}
-                  />
-                  <Typography variant="h6" align="center">
-                    Operações com o cartão
+                  /> */}
+                  <Typography variant="h6" align="center" fontWeight="bold">
+                    Saldos do Cartão
                   </Typography>
+                  <Divider
+                    sx={{
+                      my: 2,
+                      borderRadius: "10px",
+                      borderBottomWidth: "medium",
+                    }}
+                  />
+                  <Box sx={{ p: 2 }}>
+                    <Stack
+                      direction="row"
+                      flexWrap="wrap"
+                      justifyContent="space-between"
+                      sx={{ gap: 2 }}
+                    >
+                      {[
+                        { tipo: "Etanol", valor: "R$ 200,00" },
+                        { tipo: "Gasolina comum", valor: "R$ 200,00" },
+                        { tipo: "Gasolina aditivada", valor: "R$ 200,00" },
+                        { tipo: "Diesel S10", valor: "R$ 200,00" },
+                        { tipo: "Diesel S500", valor: "R$ 200,00" },
+                        { tipo: "ARLA32", valor: "R$ 200,00" },
+                      ].map((combustivel, index) => (
+                        <Box
+                          key={index}
+                          sx={{
+                            width: { xs: "100%", sm: "48%", md: "30%" }, // 3 por linha no desktop
+                            height: "40px",
+                            px: 2,
+                            py: 1,
+                            borderRadius: "8px",
+                            backgroundColor: "#f5f5f5",
+                            textAlign: "center",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            boxShadow: "1px 1px 5px rgba(0, 0, 0, 0.1)",
+                          }}
+                        >
+                          <Typography variant="body2" fontWeight="bold" color="primary">
+                            {combustivel.tipo}
+                          </Typography>
+                          <Typography variant="body2">
+                            {combustivel.valor}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Stack>
+                  </Box>
+                  <Divider
+                    sx={{
+                      my: 2,
+                      borderRadius: "10px",
+                      borderBottomWidth: "medium",
+                    }}
+                  />
+                  <Typography variant="h6" align="center" fontWeight="bold">
+                    Operações com o Cartão
+                  </Typography>
+                  {/* <Typography variant="h6" align="center">
+                    Operações com o cartão
+                  </Typography> */}
                   <Box sx={{ display: "flex", justifyContent: "center" }}>
                     <RadioGroup
                       row={isMobile ? false : true}
@@ -538,55 +627,7 @@ export default function GestaoDosSaldosECartoes() {
             )}
           </Box>
         </Container>
-        {/* {title ? ( //ToDo: Aparecer quando os dados da prefeitura forem buscados
-          <></>
-        ) : (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "60vh",
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h6" sx={{ mb: 4 }} color="gray">
-              Busque uma prefeitura!
-            </Typography>
-          </Box>
-        )} */}
       </Box>
     </MainLayout>
   );
 }
-
-const StyledAutocomplete = styled(Autocomplete)(({ theme }) => ({
-  "& .MuiAutocomplete-inputRoot": {
-    borderRadius: "15px",
-    borderColor: "black",
-    borderWidth: "2px",
-    backgroundColor: "white",
-  },
-  "& .MuiAutocomplete-label": {
-    display: "none",
-  },
-  "& .css-113d811-MuiFormLabel-root-MuiInputLabel-root": {
-    display: "none",
-  },
-  flexGrow: 1,
-}));
-
-const StyledTextField = styled(TextField)(({ theme }) => ({
-  "& .MuiFilledInput-root": {
-    "&::before, &::after": {
-      borderBottom: "none",
-    },
-    "&:hover:not(.Mui-disabled, .Mui-error):before": {
-      borderBottom: "none",
-    },
-    "&.Mui-focused:after": {
-      borderBottom: "none",
-    },
-  },
-}));
