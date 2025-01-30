@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { data, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import axios from "axios";
 import {
   Box,
   Typography,
@@ -95,6 +96,7 @@ export default function HomePrefeitura() {
 
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
+  const [dados, setDados] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -106,18 +108,104 @@ export default function HomePrefeitura() {
     // if (token) {
     //   setUserData({ token, idUsuario, idPrefeitura, idAdm, profile });
     // }
-    setTimeout(() => { // Simula um atraso de 2 segundos para carregar os dados
+    setTimeout(() => { // Simula um atraso de 1 segundos para carregar os dados
       if (token) {
         setTitle("Abastece Fácil - Prefeitura de " + nomePrefeitura);
         setUserData({ token, idUsuario, idPrefeitura, idAdm, profile });
-        setLoading(false);
+        //handleBuscarInfo();
+        //setLoading(false);
       }
     }, 1000); 
   }, []);
 
-  //Carrega o Loader na tela inteira
-  //if (!userData) return  <Loader message="Carregando dados..." />;
-  //<p>Carregando...</p>;
+  useEffect(() => { 
+    if (userData?.token && userData?.idPrefeitura) {
+      handleBuscarInfo();
+    }
+  },[userData]);
+
+  const handleBuscarInfo = async () => {
+    setLoading(true);
+
+    // if (userData) {
+    //   //alert("Atenção!\n\nDados ainda não carregados.");
+    //   console.log("Atenção!\n\nDados ainda não carregados.");
+    //   return;
+    // }
+    
+    try {
+      console.log(userData?.idPrefeitura)
+      console.log("Tentando conexão com o servidor...");
+      const response = await axios.get(
+        `https://g2inovartech.com.br/api/listarPrefeitura/${userData.idPrefeitura}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${userData.token}`,
+            "Accept": "*/*",
+          }
+        }
+      );
+      console.log("Depois de conexão com o servidor...");
+      //console.log(response.data);
+
+      const jsonData = response.data;
+
+        if (jsonData.status) {
+          // Extraindo dados da prefeitura
+          const prefeitura = jsonData.prefeitura;
+          const { PRE_ID, PRE_NOME, PRE_SALDO_ATUAL, PRE_EMAIL } = prefeitura;
+
+          // Extraindo endereço
+          const endereco = prefeitura.endereco;
+          const { END_CIDADE, END_ESTADO, END_CEP } = endereco;
+
+          // Extraindo contratos
+          const contratos = prefeitura.contratos;
+          const saldoContrato = contratos.length > 0 ? contratos[0].CON_SALDO_CONTRATO : "0.000";
+
+          // Extraindo cartões
+          const cartoes = prefeitura.cartoes;
+          const primeiroCartao = cartoes.length > 0 ? cartoes[0] : null;
+          const quantidadeCartoes = cartoes?.length;
+
+          // Extraindo saldos do primeiro cartão
+          const saldos = primeiroCartao ? primeiroCartao.saldos : [];
+          const saldoTotalPrimeiroCartao = saldos.reduce((acc, saldo) => acc + parseFloat(saldo.SAL_VALOR), 0);
+
+          // Salvando no estado
+          setDados({
+            prefeituraId: PRE_ID,
+            nomePrefeitura: PRE_NOME,
+            saldoAtual: PRE_SALDO_ATUAL,
+            emailPrefeitura: PRE_EMAIL,
+            cidade: END_CIDADE,
+            estado: END_ESTADO,
+            cep: END_CEP,
+            saldoContrato,
+            primeiroCartao,
+            saldoTotalPrimeiroCartao,
+            quantidadeCartoes,
+          });
+        }
+
+      // const { token } = response.data;
+      // const { prefeitura } = response.data;
+      
+      //handleAccess(tipoUser);
+    } catch (error) {
+      console.log(error);
+      const errorMessage =
+        error.response?.data?.message || "Erro ao buscar dados. Tente novamente.";
+      alert("Erro:\n" + errorMessage);
+      console.log("Erro: " + errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatarValor = (valor) => {
+    return typeof valor === "string" ? valor.replace(".", ",") : valor;
+  };
 
   return (
     <MainLayout titlePage={title} loading={loading}>
@@ -142,46 +230,76 @@ export default function HomePrefeitura() {
             <Typography variant="h4" gutterBottom>
               Visão Geral
             </Typography>
-            <Box 
-            sx={{
-              backgroundColor: "#FFFFFF", // Cor branca com transparência.
-              padding: 3,
-              borderRadius: 2,
-              boxShadow: 3,
-            }}>
+            <Box
+              sx={{
+                backgroundColor: "#FFFFFF", // Cor branca com transparência.
+                padding: 3,
+                borderRadius: 2,
+                boxShadow: 3,
+              }}
+            >
               <CardContent>
                 {/* <Typography variant="h6" component="div">
                 {prefeitura}
               </Typography> */}
-                <Typography variant="h6" component="div">
-                  Informações de contrato:
-                </Typography>
-                <Typography
-                  variant="body1"
-                  //align="right"
-                  color="text.secondary"
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
                 >
-                  Saldo contrato R$ 500.000,00
-                </Typography>
-                <Divider sx={{marginY: "20px"}} />
-                <Typography variant="h6" component="div">
-                  Informações dos cartões:
-                </Typography>
-                <Typography
-                  variant="body2"
-                  align="right"
-                  color="text.secondary"
+                  <Typography variant="h6" component="div">
+                    Informações de contrato:
+                  </Typography>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      //align="right"
+                      color="primary"
+                    >
+                      Saldo contrato R$ {dados?.saldoContrato ? formatarValor(dados?.saldoContrato) : ""} {/* 500.000,00 */}
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      //align="right"
+                      color="text.secondary"
+                      sx={{marginTop:"20px", fontWeight: 600}}
+                    >
+                      Saldo atual R$ {dados?.saldoAtual ? formatarValor(dados?.saldoAtual) : "" }{/* 155.000,00 */}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Divider sx={{ marginY: "20px" }} />
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
                 >
-                  Saldo atual R$ 100.000,00
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Quantidade de cartões: 5
-                </Typography>
+                  <Typography variant="h6" component="div">
+                    Informações dos cartões:
+                  </Typography>
+                  {/* <Typography
+                    variant="body2"
+                    align="right"
+                    color="text.secondary"
+                  >
+                    Saldo atual R$ 100.000,00
+                  </Typography> */}
+                  <Typography variant="body2" color="text.secondary">
+                    Quantidade de cartões: {dados?.quantidadeCartoes}
+                  </Typography>
+                </Box>
                 <Box
                   sx={{
                     width: "100%",
                     display: "flex",
                     justifyContent: "right",
+                    marginTop: "30px",
                   }}
                 >
                   <Button
