@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLocation } from "react-router-dom";
+import axios from "axios";
 import {
   TextField,
   Button,
@@ -30,7 +31,7 @@ export default function Login() {
       const redirectTo = location.state?.from?.pathname || "/home";
       navigate(redirectTo); // Navega para a página Home
     }
-    else if(profile === "PRE") {
+    else if(profile === "PREFEITURA") {
       const redirectTo = location.state?.from?.pathname || "/home-prefeitura";
       navigate(redirectTo); // Navega para a página HomePrefeitura
     }
@@ -50,25 +51,53 @@ export default function Login() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
-    let profile = "";
-    e.preventDefault();
-    if (validate()) {
-      console.log("Login enviado:", formData);
-      //alert('Bem-vindo ao sistema!');
-      if (formData.username === "adm" && formData.password === "1") {
-        //login("ADM");
-        login(rememberMe, "ADM");
-        profile = "ADM";
-      } else if (formData.username === "pre" && formData.password === "2") {
-        //login("PREFEITURA");
-        login(rememberMe, "PREFEITURA");
-        profile = "PRE";
-      } else {
-        alert("Usuário ou senha inválidos");
-      }
-      handleAccess(profile);
-      // Lógica de autenticação a ser implementada
+  const [loading, setLoading] = useState(false);
+  const handleLogin = async () => {
+    setLoading(true);
+
+    if (!formData.username || !formData.password) {
+      validate();
+      //alert("Atenção!\n\nPor favor, preencha todos os campos.");
+      console.log("Atenção!\n\nPor favor, preencha todos os campos.");
+      return;
+    }
+    
+    try {
+      console.log("Tentando conexão com o servidor...");
+      const response = await axios.post(
+        "https://g2inovartech.com.br/api/login",
+        {
+          login: formData.username,
+          password: formData.password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "*/*",
+          },
+        }
+      );
+      console.log("Depois de conexão com o servidor...");
+      //console.log(response.data);
+
+      const { token } = response.data;
+      const { user } = response.data;
+
+      let idUsuario = `${user.USU_ID}`;
+      let idPrefeitura = user.PRE_ID ? `${user.PRE_ID}` : "";
+      let idAdm = user.ADM_ID ? `${user.ADM_ID}` : "";
+      let tipoUser = user.USU_TIPO;
+      
+      login(rememberMe, tipoUser, {token, idUsuario, idPrefeitura, idAdm});
+      handleAccess(tipoUser);
+    } catch (error) {
+      console.log(error);
+      const errorMessage =
+        error.response?.data?.message || "Erro ao realizar login. Tente novamente.";
+      alert("Erro:\n" + errorMessage);
+      console.log("Erro: " + errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -148,7 +177,6 @@ export default function Login() {
             <Typography variant="h5" gutterBottom align="center">
               Login
             </Typography>
-            <form onSubmit={handleSubmit} style={{ width: "100%" }}>
               <TextField
                 fullWidth
                 label="Usuário"
@@ -182,18 +210,19 @@ export default function Login() {
               />
               <Box mt={2}>
                 <Button
-                  type="submit"
                   variant="contained"
                   color="primary"
                   fullWidth
                   sx={{
                     backgroundColor: "#808A9E",
                   }}
+                  title={loading ? "Acessando..." : "Acessar"}
+                  disabled={loading}
+                  onClick={handleLogin}
                 >
                   Acessar
                 </Button>
               </Box>
-            </form>
           </Box>
         </Box>
       </Container>
