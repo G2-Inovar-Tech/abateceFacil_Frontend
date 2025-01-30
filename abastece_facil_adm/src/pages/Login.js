@@ -14,6 +14,7 @@ import {
   Checkbox,
 } from "@mui/material";
 import { styled } from "@mui/system";
+import SmallLoader from "../components/SmallLoader.js";
 import backgroundImage from "../assets/backgroundHome.png"; // Importa a imagem
 
 export default function Login() {
@@ -48,6 +49,7 @@ export default function Login() {
       newErrors.username = "Usuário é obrigatório.";
     if (!formData.password.trim()) newErrors.password = "Senha é obrigatória.";
     setErrors(newErrors);
+    setLoading(false);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -69,6 +71,7 @@ export default function Login() {
         {
           login: formData.username,
           password: formData.password,
+          tipo: "web",
         },
         {
           headers: {
@@ -87,8 +90,9 @@ export default function Login() {
       let idPrefeitura = user.PRE_ID ? `${user.PRE_ID}` : "";
       let idAdm = user.ADM_ID ? `${user.ADM_ID}` : "";
       let tipoUser = user.USU_TIPO;
+      let nomePrefeitura = user.PRE_NOME ? user.PRE_NOME : "";
       
-      login(rememberMe, tipoUser, {token, idUsuario, idPrefeitura, idAdm});
+      login(rememberMe, tipoUser, {token, idUsuario, idPrefeitura, idAdm, nomePrefeitura});
       handleAccess(tipoUser);
     } catch (error) {
       console.log(error);
@@ -216,11 +220,10 @@ export default function Login() {
                   sx={{
                     backgroundColor: "#808A9E",
                   }}
-                  title={loading ? "Acessando..." : "Acessar"}
                   disabled={loading}
                   onClick={handleLogin}
                 >
-                  Acessar
+                  {loading ? <SmallLoader size={20} /> : "Acessar"}
                 </Button>
               </Box>
           </Box>

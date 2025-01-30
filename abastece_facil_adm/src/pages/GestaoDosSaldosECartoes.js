@@ -60,6 +60,14 @@ export default function GestaoDosSaldosECartoes() {
   const [statusCartao, setStatusCartao] = useState(true);
   const [isModalConfirmacaoOpen, setModalConfirmacaoOpen] = useState(false);
 
+  const [title, setTitle] = useState("Abastece Fácil - Prefeitura de ...");
+  const [loading, setLoading] = useState(true);
+  
+  setTimeout(() => { // Simula um atraso de 2 segundos para carregar os dados
+      setTitle("Abastece Fácil - Prefeitura de " + "Abaira");
+      setLoading(false);
+  }, 1000);
+
   const handleCancel = () => {
     //setTitle("");
     setCartaoSelecionado();
@@ -161,7 +169,7 @@ export default function GestaoDosSaldosECartoes() {
   };
 
   return (
-    <MainLayout titlePage={"Abastece Fácil - Prefeitura de Abaira"}>
+    <MainLayout titlePage={title} loading={loading}>
       <Box
         sx={{
           backgroundImage: `url(${backgroundImage})`,

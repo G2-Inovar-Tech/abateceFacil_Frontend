@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import backgroundImage from "../assets/backgroundHome.png"; // Importa a imagem
 import MainLayout from "../components/MainLayout.js";
+import Loader from "../components/Loader.js";
 
 export default function HomePrefeitura() {
   const Prefeituras = [
@@ -82,6 +83,8 @@ export default function HomePrefeitura() {
     "Prefeitura de Jaguaguara",
   ];
 
+  const [title, setTitle] = useState("Abastece Fácil - Prefeitura de ...");
+
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -90,8 +93,34 @@ export default function HomePrefeitura() {
     navigate(redirectTo); // Navega para a página Home
   };
 
+  const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const idUsuario = localStorage.getItem("idUsuario") || sessionStorage.getItem("idUsuario");
+    const idPrefeitura = localStorage.getItem("idPrefeitura") || sessionStorage.getItem("idPrefeitura");
+    const idAdm = localStorage.getItem("idAdm") || sessionStorage.getItem("idAdm"); //Remover desta pagina
+    const profile = localStorage.getItem("profile") || sessionStorage.getItem("profile");
+    const nomePrefeitura = localStorage.getItem("nomePrefeitura") || sessionStorage.getItem("nomePrefeitura");
+    // if (token) {
+    //   setUserData({ token, idUsuario, idPrefeitura, idAdm, profile });
+    // }
+    setTimeout(() => { // Simula um atraso de 2 segundos para carregar os dados
+      if (token) {
+        setTitle("Abastece Fácil - Prefeitura de " + nomePrefeitura);
+        setUserData({ token, idUsuario, idPrefeitura, idAdm, profile });
+        setLoading(false);
+      }
+    }, 1000); 
+  }, []);
+
+  //Carrega o Loader na tela inteira
+  //if (!userData) return  <Loader message="Carregando dados..." />;
+  //<p>Carregando...</p>;
+
   return (
-    <MainLayout titlePage={"Abastece Fácil - Prefeitura de Abaira"}>
+    <MainLayout titlePage={title} loading={loading}>
       <Box
         sx={{
           flexGrow: 1, // Faz com que ocupe o restante do espaço vertical.

@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { Box, CssBaseline, useMediaQuery } from "@mui/material";
 import TopBar from "../components/TopBar";
 import SideMenu from "../components/SideMenu";
+import Loader from "../components/Loader.js";
 
-export default function MainLayout({ children, titlePage }) {
+export default function MainLayout({ children, titlePage, loading }) {
   const isMobile = useMediaQuery("(max-width:600px)"); // Detecta telas pequenas
 
   const [open, setOpen] = useState(isMobile? false : true);  // Começa aberto
@@ -32,7 +33,8 @@ export default function MainLayout({ children, titlePage }) {
           marginTop: "75px",
         }}
       >
-        {children}
+        {loading ? <Loader message="Carregando dados..." /> : children}
+        {/* {children} */}
       </Box>
     </Box>
   );
