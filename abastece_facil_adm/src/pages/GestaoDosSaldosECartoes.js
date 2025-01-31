@@ -299,6 +299,7 @@ export default function GestaoDosSaldosECartoes() {
         label: formData?.setor,
         num_cartao: cartaoSelecionado?.num_cartao,
       });
+      editarCartao(false, formData?.responsavel);
     }
   };
 
@@ -306,8 +307,7 @@ export default function GestaoDosSaldosECartoes() {
   const handleCloseModalConfirmacao = () => setModalConfirmacaoOpen(false); // Fechar modal de confirmação
   const handleModalConfirmacao = (confirmed) => { // Aplicar confirmação de (des)bloqueio de cartão
     if (confirmed) {
-      setStatusCartao(!statusCartao);
-      console.log("Ação confirmada!");
+      editarCartao(true, "");
     }
   };
 
@@ -359,6 +359,63 @@ export default function GestaoDosSaldosECartoes() {
       console.log(error);
       const errorMessage =
         error.response?.data?.message || "Erro ao realizar transação de saldo no cartão. Tente novamente.";
+      alert("Erro:\n" + errorMessage);
+      console.log("Erro: " + errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const editarCartao = async (bloquear, alterar) => {
+    setLoading(true);
+    let idCartao = Number.parseInt(cartaoSelecionado?.num_cartao);
+
+    let dadosAlterado = {};
+
+    if (bloquear) {
+      let status = cartaoSelecionado?.status === "ATIVO"? "INATIVO" : "ATIVO"
+      dadosAlterado = {
+        CAR_STATUS: status,
+      };
+    }
+    else if (alterar !== "") {
+      dadosAlterado = {
+        //CAR_ID_ORGAO_RESP: "",
+        //CAR_RESP_NOME: cartaoSelecionado.
+      };
+    }
+
+    try {
+      console.log(userData?.idPrefeitura)
+      console.log(saldoTransacao);
+      console.log("Tentando conexão com o servidor...");
+      const response = await axios.put(
+        `https://g2inovartech.com.br/api/cartao/${idCartao}`,
+        dadosAlterado,
+        {
+          headers: {
+            'Authorization': `Bearer ${userData.token}`,
+            "Accept": "*/*",
+          }
+        }
+      );
+      console.log("Depois de conexão com o servidor...");
+
+      const jsonData = response.data;
+
+      if (jsonData.status) {
+        alert("Sucesso:\n" + jsonData.message);
+
+        setTimeout(() => {
+          // Espera 3 segundo para que os dados seja atualizado no servidor
+          handleCancel();
+          handleBuscarInfo();
+        }, 1000);
+      }
+    } catch (error) {
+      console.log(error);
+      const errorMessage =
+        error.response?.data?.message || "Erro ao editar informações do cartão. Tente novamente.";
       alert("Erro:\n" + errorMessage);
       console.log("Erro: " + errorMessage);
     } finally {
@@ -543,7 +600,8 @@ export default function GestaoDosSaldosECartoes() {
                       <strong>Setor:</strong> {cartaoSelecionado?.label} <br />
                       <strong>Responsável:</strong> {cartaoSelecionado?.nomeResponsavel} {/* responsavel */} <br />
                       <strong>Status:</strong>
-                      {statusCartao ? "Ativo" : "Bloqueado"}
+                      {/* {statusCartao ? "Ativo" : "Bloqueado"} */}
+                      {cartaoSelecionado?.status === "ATIVO" ? "Ativo" : "Bloqueado"}
                     </Typography>
                   </Box>
                 </Box>
@@ -563,8 +621,8 @@ export default function GestaoDosSaldosECartoes() {
             />
             {cartaoSelecionado ? (
               <Box>
-                {/* <Box>
-                  <IconButton
+                <Box>
+                  {/* <IconButton
                     type="button"
                     aria-label="Criar cartão"
                     size="small"
@@ -592,7 +650,7 @@ export default function GestaoDosSaldosECartoes() {
                       }}
                     />
                     <Typography size="20px">Editar cartão</Typography>
-                  </IconButton>
+                  </IconButton> */}
                   <FormControlLabel
                     control={
                       <Checkbox
@@ -602,10 +660,11 @@ export default function GestaoDosSaldosECartoes() {
                       />
                     }
                     label={
-                      statusCartao ? "Bloquear cartão" : "Cartão bloqueado"
+                      //statusCartao ? "Bloquear cartão" : "Cartão bloqueado"
+                      cartaoSelecionado?.status === "ATIVO" ? "Bloquear cartão" : "Cartão bloqueado"
                     }
                   />
-                </Box> */}
+                </Box>
                 <ModalConfirmacao
                   open={isModalConfirmacaoOpen}
                   onClose={handleCloseModalConfirmacao}

@@ -94,6 +94,7 @@ export default function ModalGerarEditarCard({
           value={formValues.setor}
           onChange={handleChange("setor")}
           fullWidth
+          disabled={isEdicao}
         />
         <TextField
           required
