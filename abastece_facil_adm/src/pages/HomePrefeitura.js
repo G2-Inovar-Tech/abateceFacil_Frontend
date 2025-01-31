@@ -166,7 +166,7 @@ export default function HomePrefeitura() {
           // Extraindo cartões
           const cartoes = prefeitura.cartoes;
           const primeiroCartao = cartoes.length > 0 ? cartoes[0] : null;
-          const quantidadeCartoes = cartoes?.length;
+          const quantidadeCartoes = cartoes?.length - 1;
 
           // Extraindo saldos do primeiro cartão
           const saldos = primeiroCartao ? primeiroCartao.saldos : [];

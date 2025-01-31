@@ -33,19 +33,30 @@ import backgroundImage from "../assets/backgroundHome.png"; // Importa a imagem
 export default function GestaoDosSaldosECartoes() {
   const isMobile = useMediaQuery("(max-width:600px)"); // Detecta telas pequenas
   
-  const cartoes = [
-    //Limitar Label dos cartões até no máximo 30 caracteres
-    { label: "Geral", num_cartao: "1234" },
-    { label: "Secretaria da Saúde", num_cartao: "2134" },
-    {
-      label: "Secretaria da Educação",
-      num_cartao: "3124",
-    },
-    {
-      label: "Secretaria de infraestrutura qwe",
-      num_cartao: "4123",
-    },
-  ];
+  // const cartoes = [
+  //   //Limitar Label dos cartões até no máximo 30 caracteres
+  //   { 
+  //     label: "Geral", 
+  //     num_cartao: "1234", 
+  //     saldos: [{saldo: "12341"}] 
+  //   },
+  //   { 
+  //     label: "Secretaria da Saúde", 
+  //     num_cartao: "2134", 
+  //     saldos: [{saldo: "12341"}] 
+  //   },
+  //   {
+  //     label: "Secretaria da Educação",
+  //     num_cartao: "3124", 
+  //     saldos: [{saldo: "12341"}] 
+  //   },
+  //   {
+  //     label: "Secretaria de infraestrutura qwe",
+  //     num_cartao: "4123", 
+  //     saldos: [{saldo: "12341"}]
+  //   },
+  // ];
+  const [cartoes, setCartoes] = useState([]);
 
   const [cartaoSelecionado, setCartaoSelecionado] = useState();
   const [selectedOption, setSelectedOption] = useState("");
@@ -63,9 +74,10 @@ export default function GestaoDosSaldosECartoes() {
   const [statusCartao, setStatusCartao] = useState(true);
   const [isModalConfirmacaoOpen, setModalConfirmacaoOpen] = useState(false);
 
-  const [selectedValue, setSelectedValue] = useState("");
+  const [selectedCombustivelparaSaldo, setSelectedCombustivelparaSaldo] = useState("");
 
   const combustiveis = [
+    { key: "0", valor: "" },
     { key: "1", valor: "Etanol" },
     { key: "2", valor: "Gasolina comum" },
     { key: "3", valor: "Gasolina aditivada" },
@@ -75,7 +87,14 @@ export default function GestaoDosSaldosECartoes() {
   ];
 
   const handleChangeSelectCombustivel = (event) => {
-    setSelectedValue(event.target.value);
+    let valorSelecinado = event.target.value;
+    if (valorSelecinado === ""){
+      setDesabilitarSalvar(true);
+    }
+    if (saldoText !== "" && valorSelecinado !== "") {
+      setDesabilitarSalvar(false);
+    }
+    setSelectedCombustivelparaSaldo(valorSelecinado);
   };
 
   const [title, setTitle] = useState("Abastece Fácil - Prefeitura de ...");
@@ -83,7 +102,7 @@ export default function GestaoDosSaldosECartoes() {
   const [userData, setUserData] = useState(null);
   const [dados, setDados] = useState(null);
 
-  useEffect(() => {
+  useEffect(() => { // Pegando os dados do usuário logado
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     const idUsuario = localStorage.getItem("idUsuario") || sessionStorage.getItem("idUsuario");
     const idPrefeitura = localStorage.getItem("idPrefeitura") || sessionStorage.getItem("idPrefeitura");
@@ -143,15 +162,48 @@ export default function GestaoDosSaldosECartoes() {
           const primeiroCartao = cartoes.length > 0 ? cartoes[0] : null;
           const quantidadeCartoes = cartoes?.length;
 
+          if (prefeitura.cartoes && prefeitura.cartoes.length > 0) {
+            // Mapeando os dados recebidos para o formato esperado
+            const cartoesFormatados = prefeitura.cartoes
+              .filter((cartao) => cartao.CAR_TIPO !== "MASTER")
+              .map((cartao) => ({
+                // label === setor
+                label: cartao.orgao.ORG_DESCRICAO.length > 30
+                        ? cartao.orgao.ORG_DESCRICAO.substring(0, 27) + "..." // Limita a 30 caracteres
+                        : cartao.orgao.ORG_DESCRICAO,
+                num_cartao: numeroCartaoFormatado(cartao.CAR_CODIGO_QRCODE),
+                nomeResponsavel:
+                  cartao.CAR_RESP_NOME.length > 30
+                    ? cartao.CAR_RESP_NOME.substring(0, 27) + "..." // Limita a 30 caracteres
+                    : cartao.CAR_RESP_NOME,
+                status: cartao.CAR_STATUS,
+                saldos: cartao.saldos.map( (saldo) => ({
+                  tipo: saldo.combustivel.COM_DESCRICAO,
+                  valor: formatarValor(saldo.SAL_VALOR),
+                })),
+              }));
+            setCartoes(cartoesFormatados);
+          }
+
+          //Pegando cartão master para extrair Saldo Livre e saldos nos cartoes
+          const cartaoMaster = cartoes.find(cartao => cartao.CAR_TIPO === "MASTER");
+          const saldoCartaoMaster = cartaoMaster.saldos[0].SAL_VALOR;
+          
+          const saldoCartoes = 
+          (Number.parseInt(`${PRE_SALDO_ATUAL}`) - Number.parseInt(`${saldoCartaoMaster}`)).toFixed(3);
+          const saldoNosCartoes = `${saldoCartoes}`;
+
           // Extraindo saldos do primeiro cartão
           const saldos = primeiroCartao ? primeiroCartao.saldos : [];
           const saldoTotalPrimeiroCartao = saldos.reduce((acc, saldo) => acc + parseFloat(saldo.SAL_VALOR), 0);
-
+          
           // Salvando no estado
           setDados({
             prefeituraId: PRE_ID,
             nomePrefeitura: PRE_NOME,
             saldoAtual: PRE_SALDO_ATUAL,
+            saldoLivre: saldoCartaoMaster,
+            saldoNosCartoes,
             emailPrefeitura: PRE_EMAIL,
             cidade: END_CIDADE,
             estado: END_ESTADO,
@@ -186,7 +238,7 @@ export default function GestaoDosSaldosECartoes() {
     setCartaoDestino();
     setDesabilitarSalvar(true);
     setLabelBotaoSalvar("Salvar");
-    setSelectedValue("");
+    setSelectedCombustivelparaSaldo("");
   };
 
   const handleOptionChange = (event) => {
@@ -196,7 +248,7 @@ export default function GestaoDosSaldosECartoes() {
     setSaldoTransacao(0);
     setCartaoDestino();
     setDesabilitarSalvar(true);
-    setSelectedValue("");
+    setSelectedCombustivelparaSaldo("");
     
     if (opcao === "adicionarSaldo" || opcao === "removerSaldo")
       setLabelBotaoSalvar("Confirmar");
@@ -236,10 +288,16 @@ export default function GestaoDosSaldosECartoes() {
       let saldo = parseFloat(inputValue);
       if (!isNaN(saldo) && saldo > 0){
         setSaldoTransacao(saldo);
-        if (selectedOption === "adicionarSaldo" || selectedOption === "removerSaldo")
-          setDesabilitarSalvar(false);
-        if (selectedOption === "transferirSaldo" && cartaoDestino)
-          setDesabilitarSalvar(false);
+        if (selectedOption === "adicionarSaldo" || selectedOption === "removerSaldo"){
+          if (selectedCombustivelparaSaldo !== ""){
+            setDesabilitarSalvar(false);
+          }
+        }
+        else if (selectedOption === "transferirSaldo" && cartaoDestino) {
+          if (selectedCombustivelparaSaldo !== "") {
+            setDesabilitarSalvar(false);
+          }
+        }
       }
       else{
         setDesabilitarSalvar(true);
@@ -263,6 +321,7 @@ export default function GestaoDosSaldosECartoes() {
     if (modalMode === "editar") {
       console.log("Dados recebidos do modal:", formData);
       setResponsavel(formData?.responsavel);
+      //Alterar o responsavel no objeto cartaoSelecionado!
       setCartaoSelecionado({
         label: formData?.setor,
         num_cartao: cartaoSelecionado?.num_cartao,
@@ -281,6 +340,17 @@ export default function GestaoDosSaldosECartoes() {
 
   const formatarValor = (valor) => {
     return typeof valor === "string" ? valor.replace(".", ",") : valor;
+  };
+
+  const numeroCartaoFormatado = (numCartao) => {
+    if(numCartao.length === 1)
+      return "000" + numCartao;
+    else if(numCartao.length === 2)
+      return "00" + numCartao;
+    else if(numCartao.length === 3)
+      return "0" + numCartao;
+    else
+      return numCartao;
   };
 
   return (
@@ -326,7 +396,8 @@ export default function GestaoDosSaldosECartoes() {
                     Saldo de contrato restante:
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
-                    R$ 155.000,00
+                    R$ {dados?.saldoAtual ? formatarValor(dados?.saldoAtual) : ""} 
+                    {/*dados?.saldoAtual R$ 155.000,00 */}
                   </Typography>
                 </Box>
                 <Box //Linha vertical (não exibe no mobile)
@@ -348,7 +419,8 @@ export default function GestaoDosSaldosECartoes() {
                     Saldo livre:
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
-                    R$ 1.000,00
+                    {dados?.saldoLivre ? formatarValor(dados?.saldoLivre) : ""} 
+                    {/* R$ 1.000,00 */}
                   </Typography>
                 </Box>
                 <Box //Linha vertical (não exibe no mobile)
@@ -370,7 +442,8 @@ export default function GestaoDosSaldosECartoes() {
                     Saldos nos cartões:
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
-                    R$ 1.000,00
+                  {dados?.saldoNosCartoes ? formatarValor(dados?.saldoNosCartoes) : ""} 
+                  {/* R$ 1.000,00 */}
                   </Typography>
                 </Box>
               </Stack>
@@ -411,31 +484,6 @@ export default function GestaoDosSaldosECartoes() {
                 />
               </Box>
               {cartaoSelecionado ? (
-                // <Box
-                //   sx={{
-                //     flex: 0.8,
-                //     backgroundColor: "#dddddd",
-                //     borderRadius: 5,
-                //     padding: 1,
-                //   }}
-                // >
-                //   <Typography variant="body1" align="center">
-                //     Cartão selecionado: Nº {cartaoSelecionado?.num_cartao}
-                //   </Typography>
-                //   <Box
-                //     sx={{
-                //       display: "flex",
-                //       flexDirection: "row",
-                //       justifyContent: "space-between",
-                //     }}
-                //   >
-                //     <Typography variant="body2">
-                //       Setor: {cartaoSelecionado?.label} <br />
-                //       Responsável: {responsavel} <br />
-                //       Status: {statusCartao ? "Ativo" : "Bloqueado"}
-                //     </Typography>
-                //   </Box>
-                // </Box>
                 <Box
                   sx={{
                     flex: 0.8,
@@ -465,7 +513,7 @@ export default function GestaoDosSaldosECartoes() {
                   >
                     <Typography variant="body2">
                       <strong>Setor:</strong> {cartaoSelecionado?.label} <br />
-                      <strong>Responsável:</strong> {responsavel} <br />
+                      <strong>Responsável:</strong> {cartaoSelecionado?.nomeResponsavel} {/* responsavel */} <br />
                       <strong>Status:</strong>
                       {statusCartao ? "Ativo" : "Bloqueado"}
                     </Typography>
@@ -599,14 +647,7 @@ export default function GestaoDosSaldosECartoes() {
                       justifyContent="space-between"
                       sx={{ gap: 2 }}
                     >
-                      {[
-                        { tipo: "Etanol", valor: "R$ 100,00" },
-                        { tipo: "Gasolina comum", valor: "R$ 100,00" },
-                        { tipo: "Gasolina aditivada", valor: "R$ 100,00" },
-                        { tipo: "Diesel S10", valor: "R$ 100,00" },
-                        { tipo: "Diesel S500", valor: "R$ 100,00" },
-                        { tipo: "ARLA32", valor: "R$ 100,00" },
-                      ].map((combustivel, index) => (
+                      {cartaoSelecionado.saldos.map((combustivel, index) => (
                         <Box
                           key={index}
                           sx={{
@@ -676,34 +717,36 @@ export default function GestaoDosSaldosECartoes() {
                     </RadioGroup>
                   </Box>
                   {selectedOption === "adicionarSaldo" && (
-                    <Box>
-                      <TextField
-                        label="Saldo R$"
-                        value={saldoText}
-                        onChange={ValidarCampoMoeda}
-                        variant="outlined"
-                        sx={{
-                          width: isMobile ? "100%" : 320,
-                        }}
-                        margin="normal"
-                      />
-                      <Typography variant="subtitle1">
-                        Selecione o Combustível:
-                      </Typography>
-                      <Select
-                        value={selectedValue}
-                        onChange={handleChangeSelectCombustivel}
-                        //label="Selecione o Combustível"
-                        sx={{
-                          width: isMobile ? "100%" : 320,
-                        }}
-                      >
-                        {combustiveis.map((item) => (
-                          <MenuItem key={item.key} value={item.valor}>
-                            {item.valor}
-                          </MenuItem>
-                        ))}
-                      </Select>
+                    <Box sx={{display: "flex", justifyContent:"center"}}>
+                      <Box sx={{display: "block"}}>
+                        <TextField
+                          label="Saldo R$"
+                          value={saldoText}
+                          onChange={ValidarCampoMoeda}
+                          variant="outlined"
+                          sx={{
+                            width: isMobile ? "100%" : 320,
+                          }}
+                          margin="normal"
+                        />
+                        <Typography variant="subtitle1">
+                          Selecione o Combustível:
+                        </Typography>
+                        <Select
+                          value={selectedCombustivelparaSaldo}
+                          onChange={handleChangeSelectCombustivel}
+                          //label="Selecione o Combustível"
+                          sx={{
+                            width: isMobile ? "100%" : 320,
+                          }}
+                        >
+                          {combustiveis.map((item) => (
+                            <MenuItem key={item.key} value={item.valor}>
+                              {item.valor}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </Box>
                     </Box>
                   )}
 
@@ -732,34 +775,36 @@ export default function GestaoDosSaldosECartoes() {
                   )}
 
                   {selectedOption === "removerSaldo" && (
-                    <Box>
-                      <TextField
-                        label="Saldo R$"
-                        value={saldoText}
-                        onChange={ValidarCampoMoeda}
-                        variant="outlined"
-                        sx={{
-                          width: isMobile ? "100%" : 320,
-                        }}
-                        margin="normal"
-                      />
-                      <Typography variant="subtitle1">
-                        Selecione o Combustível:
-                      </Typography>
-                      <Select
-                        value={selectedValue}
-                        onChange={handleChangeSelectCombustivel}
-                        //label="Selecione o Combustível"
-                        sx={{
-                          width: isMobile ? "100%" : 320,
-                        }}
-                      >
-                        {combustiveis.map((item) => (
-                          <MenuItem key={item.key} value={item.valor}>
-                            {item.valor}
-                          </MenuItem>
-                        ))}
-                      </Select>
+                    <Box sx={{display: "flex", justifyContent:"center"}}>
+                      <Box sx={{display: "block"}}>
+                        <TextField
+                          label="Saldo R$"
+                          value={saldoText}
+                          onChange={ValidarCampoMoeda}
+                          variant="outlined"
+                          sx={{
+                            width: isMobile ? "100%" : 320,
+                          }}
+                          margin="normal"
+                        />
+                        <Typography variant="subtitle1">
+                          Selecione o Combustível:
+                        </Typography>
+                        <Select
+                          value={selectedCombustivelparaSaldo}
+                          onChange={handleChangeSelectCombustivel}
+                          //label="Selecione o Combustível"
+                          sx={{
+                            width: isMobile ? "100%" : 320,
+                          }}
+                        >
+                          {combustiveis.map((item) => (
+                            <MenuItem key={item.key} value={item.valor}>
+                              {item.valor}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </Box>
                     </Box>
                   )}
                   <Box //Box Botões de controle: Salvar e Cancelar
