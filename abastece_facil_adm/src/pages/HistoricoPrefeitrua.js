@@ -15,7 +15,7 @@ export default function HistoricoPrefeitura() {
       <Box>
         {/* <Typography>Hello Word!</Typography> */}
         <Typography variant="h3">Histórico</Typography>
-        <Typography variant="body1">Nenhum dadao encontrado!</Typography>
+        <Typography variant="body1">Nenhum dado encontrado!</Typography>
       </Box>
     </MainLayout>
   );

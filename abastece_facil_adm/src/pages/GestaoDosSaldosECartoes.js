@@ -33,37 +33,13 @@ import backgroundImage from "../assets/backgroundHome.png"; // Importa a imagem
 export default function GestaoDosSaldosECartoes() {
   const isMobile = useMediaQuery("(max-width:600px)"); // Detecta telas pequenas
   
-  // const cartoes = [
-  //   //Limitar Label dos cartões até no máximo 30 caracteres
-  //   { 
-  //     label: "Geral", 
-  //     num_cartao: "1234", 
-  //     saldos: [{saldo: "12341"}] 
-  //   },
-  //   { 
-  //     label: "Secretaria da Saúde", 
-  //     num_cartao: "2134", 
-  //     saldos: [{saldo: "12341"}] 
-  //   },
-  //   {
-  //     label: "Secretaria da Educação",
-  //     num_cartao: "3124", 
-  //     saldos: [{saldo: "12341"}] 
-  //   },
-  //   {
-  //     label: "Secretaria de infraestrutura qwe",
-  //     num_cartao: "4123", 
-  //     saldos: [{saldo: "12341"}]
-  //   },
-  // ];
   const [cartoes, setCartoes] = useState([]);
-
   const [cartaoSelecionado, setCartaoSelecionado] = useState();
   const [selectedOption, setSelectedOption] = useState("");
   const [desabilitarSalvar, setDesabilitarSalvar] = useState(true);
   const [labelBotaoSalvar, setLabelBotaoSalvar] = useState("Salva");
   
-  const [saldoTransacao, setSaldoTransacao] = useState(0);
+  const [saldoTransacao, setSaldoTransacao] = useState(0.0);
   const [cartaoDestino, setCartaoDestino] = useState();
   const [saldoText, setSaldoText] = useState("");
 
@@ -190,7 +166,7 @@ export default function GestaoDosSaldosECartoes() {
           const saldoCartaoMaster = cartaoMaster.saldos[0].SAL_VALOR;
           
           const saldoCartoes = 
-          (Number.parseInt(`${PRE_SALDO_ATUAL}`) - Number.parseInt(`${saldoCartaoMaster}`)).toFixed(3);
+          (Number.parseFloat(`${PRE_SALDO_ATUAL}`) - Number.parseFloat(`${saldoCartaoMaster}`)).toFixed(3);
           const saldoNosCartoes = `${saldoCartoes}`;
 
           // Extraindo saldos do primeiro cartão
@@ -224,10 +200,6 @@ export default function GestaoDosSaldosECartoes() {
       setLoading(false);
     }
   };
-  // setTimeout(() => { // Simula um atraso de 1 segundos para carregar os dados
-  //     setTitle("Abastece Fácil - Prefeitura de " + "Abaira");
-  //     setLoading(false);
-  // }, 1000);
 
   const handleCancel = () => {
     //setTitle("");
@@ -285,7 +257,8 @@ export default function GestaoDosSaldosECartoes() {
     // Se o valor for diferente de string vazia, adiciona o R$.
     if(inputValue !== "") {
       setSaldoText("R$ " + inputValue);
-      let saldo = parseFloat(inputValue);
+      let saldoString = inputValue.replace(",", ".");
+      let saldo = Number.parseFloat(saldoString);//.toFixed(3);
       if (!isNaN(saldo) && saldo > 0){
         setSaldoTransacao(saldo);
         if (selectedOption === "adicionarSaldo" || selectedOption === "removerSaldo"){
@@ -335,6 +308,61 @@ export default function GestaoDosSaldosECartoes() {
     if (confirmed) {
       setStatusCartao(!statusCartao);
       console.log("Ação confirmada!");
+    }
+  };
+
+  const adicionarRemoverSaldo = async () => {
+    setLoading(true);
+
+    const tipoCombustivel = combustiveis
+    .filter((combustivel) => combustivel.valor === selectedCombustivelparaSaldo)
+
+    let url = "";
+    if(selectedOption === "adicionarSaldo"){
+      url = `https://g2inovartech.com.br/api/adicionarSaldo`;
+    } else if (selectedOption === "removerSaldo") {
+      url = `https://g2inovartech.com.br/api/retirarSaldo`;
+    }
+    try {
+      console.log(userData?.idPrefeitura)
+      console.log(saldoTransacao);
+      console.log("Tentando conexão com o servidor...");
+      const response = await axios.post(
+        url,
+        {
+          TRA_ID_CARTAO_ORIGEM: Number.parseInt(cartaoSelecionado?.num_cartao), //Usado na remoção
+          TRA_ID_CARTAO_DESTINO: Number.parseInt(cartaoSelecionado?.num_cartao), // Usando na adição
+          TRA_COM_ID: Number.parseInt(tipoCombustivel[0]?.key),
+          TRA_VALOR: saldoTransacao,
+          TRA_USU_ID: Number.parseInt(userData.idUsuario),
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${userData.token}`,
+            "Accept": "*/*",
+          }
+        }
+      );
+      console.log("Depois de conexão com o servidor...");
+
+      const jsonData = response.data;
+
+      if (jsonData.status) {
+        alert("Sucesso:\n" + jsonData.message);
+        setTimeout(() => {
+          // Espera 3 segundo para que os dados seja atualizado no servidor
+          handleCancel();
+          handleBuscarInfo();
+        }, 1000);
+      }
+    } catch (error) {
+      console.log(error);
+      const errorMessage =
+        error.response?.data?.message || "Erro ao realizar transação de saldo no cartão. Tente novamente.";
+      alert("Erro:\n" + errorMessage);
+      console.log("Erro: " + errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -419,7 +447,7 @@ export default function GestaoDosSaldosECartoes() {
                     Saldo livre:
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
-                    {dados?.saldoLivre ? formatarValor(dados?.saldoLivre) : ""} 
+                    R$ {dados?.saldoLivre ? formatarValor(dados?.saldoLivre) : ""} 
                     {/* R$ 1.000,00 */}
                   </Typography>
                 </Box>
@@ -442,7 +470,7 @@ export default function GestaoDosSaldosECartoes() {
                     Saldos nos cartões:
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
-                  {dados?.saldoNosCartoes ? formatarValor(dados?.saldoNosCartoes) : ""} 
+                  R$ {dados?.saldoNosCartoes ? formatarValor(dados?.saldoNosCartoes) : ""} 
                   {/* R$ 1.000,00 */}
                   </Typography>
                 </Box>
@@ -535,7 +563,7 @@ export default function GestaoDosSaldosECartoes() {
             />
             {cartaoSelecionado ? (
               <Box>
-                <Box>
+                {/* <Box>
                   <IconButton
                     type="button"
                     aria-label="Criar cartão"
@@ -577,7 +605,7 @@ export default function GestaoDosSaldosECartoes() {
                       statusCartao ? "Bloquear cartão" : "Cartão bloqueado"
                     }
                   />
-                </Box>
+                </Box> */}
                 <ModalConfirmacao
                   open={isModalConfirmacaoOpen}
                   onClose={handleCloseModalConfirmacao}
@@ -597,39 +625,6 @@ export default function GestaoDosSaldosECartoes() {
                     borderRadius: "5px",
                   }}
                 >
-                  {/* <Typography variant="h6" align="center">
-                    Saldos do cartão
-                  </Typography>
-                  <Divider sx={{ margin: "5px 0", borderRadius: "20px" }} />
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                    }}
-                  > */}
-                  {/* <Typography variant="body1">
-                      Número do cartão: {cartaoSelecionado?.num_cartao} <br />
-                      Setor: {cartaoSelecionado?.label} <br />
-                      Responsável: {responsavel} <br />
-                      Status: {statusCartao ? "Ativo" : "Bloqueado"}
-                    </Typography> */}
-                  {/* <Typography variant="body1" align="right">
-                      Etanol: R$ 200,00 <br />
-                      Gasolina comum: R$ 200,00 <br />
-                      Gasolina aditivada: R$ 200,00 <br />
-                      Diesel S10: R$ 200,00 <br />
-                      Diesel S500: R$ 200,00 <br />
-                      ARLA32: R$ 200,00 <br />
-                    </Typography>
-                  </Box>
-                  <Divider
-                    sx={{
-                      margin: "5px 0",
-                      borderRadius: "20px",
-                      borderBottomWidth: "medium",
-                    }}
-                  /> */}
                   <Typography variant="h6" align="center" fontWeight="bold">
                     Saldos do Cartão
                   </Typography>
@@ -689,9 +684,6 @@ export default function GestaoDosSaldosECartoes() {
                   <Typography variant="h6" align="center" fontWeight="bold">
                     Operações com o Cartão
                   </Typography>
-                  {/* <Typography variant="h6" align="center">
-                    Operações com o cartão
-                  </Typography> */}
                   <Box sx={{ display: "flex", justifyContent: "center" }}>
                     <RadioGroup
                       row={isMobile ? false : true}
@@ -815,10 +807,11 @@ export default function GestaoDosSaldosECartoes() {
                     }}
                   >
                     <Button
-                      type="submit"
+                      //type="submit"
                       variant="contained"
                       color="primary"
                       disabled={desabilitarSalvar}
+                      onClick={adicionarRemoverSaldo}
                     >
                       {labelBotaoSalvar}
                     </Button>

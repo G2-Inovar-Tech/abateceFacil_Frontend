@@ -65,7 +65,7 @@ export default function SideMenu({ open, handleDrawerToggle }) {
 
   // Itens do menu para Prefeitura
   const prefeituraMenuItems = [
-    { text: "Overview", path: "/home-prefeitura", icon: <HomeIcon /> },
+    { text: "Visão Geral", path: "/home-prefeitura", icon: <HomeIcon /> },
     {
       text: "Gerenciar Saldos e Cartões",
       path: "/gestao-saldos-cartoes",
