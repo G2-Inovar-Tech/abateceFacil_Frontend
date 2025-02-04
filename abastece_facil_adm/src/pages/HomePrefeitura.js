@@ -204,7 +204,18 @@ export default function HomePrefeitura() {
   };
 
   const formatarValor = (valor) => {
-    return typeof valor === "string" ? valor.replace(".", ",") : valor;
+    if (typeof valor !== "string") {
+      return valor;
+    }
+    
+    let valorFormatado = valor.replace(".", ",");
+    let [parteInteira, parteDecimal] = valorFormatado.split(",");
+    
+    let parteInteiraFormatada = Number(parteInteira).toLocaleString("pt-BR");
+
+    return parteDecimal
+      ? `${parteInteiraFormatada},${parteDecimal}`
+      : parteInteiraFormatada;
   };
 
   return (

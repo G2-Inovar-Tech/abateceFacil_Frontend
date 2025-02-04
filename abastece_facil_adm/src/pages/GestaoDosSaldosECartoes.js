@@ -149,8 +149,8 @@ export default function GestaoDosSaldosECartoes() {
                         : cartao.orgao.ORG_DESCRICAO,
                 num_cartao: numeroCartaoFormatado(cartao.CAR_CODIGO_QRCODE),
                 nomeResponsavel:
-                  cartao.CAR_RESP_NOME.length > 30
-                    ? cartao.CAR_RESP_NOME.substring(0, 27) + "..." // Limita a 30 caracteres
+                  cartao.CAR_RESP_NOME.length > 43
+                    ? cartao.CAR_RESP_NOME.substring(0, 40) + ""//"..." // Limita a 40 caracteres
                     : cartao.CAR_RESP_NOME,
                 status: cartao.CAR_STATUS,
                 saldos: cartao.saldos.map( (saldo) => ({
@@ -290,15 +290,9 @@ export default function GestaoDosSaldosECartoes() {
     setModalOpen(true);
   };
   const handleCloseModalGerarEditarCard = () => setModalOpen(false); // Fecar modal Gerar/Editar cartão
-  const handleFormSubmit = (formData) => { // Aplicar edição de cartão na propria pagina
+  const handleSubmeterAlteracaoDeResponsavel = (formData) => { // Aplicar edição de cartão na propria pagina
     if (modalMode === "editar") {
       console.log("Dados recebidos do modal:", formData);
-      setResponsavel(formData?.responsavel);
-      //Alterar o responsavel no objeto cartaoSelecionado!
-      setCartaoSelecionado({
-        label: formData?.setor,
-        num_cartao: cartaoSelecionado?.num_cartao,
-      });
       editarCartao(false, formData?.responsavel);
     }
   };
@@ -366,7 +360,7 @@ export default function GestaoDosSaldosECartoes() {
     }
   };
 
-  const editarCartao = async (bloquear, alterar) => {
+  const editarCartao = async (bloquear, nomeResponsavelAlterado) => {
     setLoading(true);
     let idCartao = Number.parseInt(cartaoSelecionado?.num_cartao);
 
@@ -378,10 +372,10 @@ export default function GestaoDosSaldosECartoes() {
         CAR_STATUS: status,
       };
     }
-    else if (alterar !== "") {
+    if (nomeResponsavelAlterado !== "") {
       dadosAlterado = {
         //CAR_ID_ORGAO_RESP: "",
-        //CAR_RESP_NOME: cartaoSelecionado.
+        CAR_RESP_NOME: nomeResponsavelAlterado
       };
     }
 
@@ -424,7 +418,28 @@ export default function GestaoDosSaldosECartoes() {
   };
 
   const formatarValor = (valor) => {
-    return typeof valor === "string" ? valor.replace(".", ",") : valor;
+    if (typeof valor !== "string") {
+      return valor;
+    }
+    
+    // Substituir "." por "," na parte decimal
+    let valorFormatado = valor.replace(".", ",");
+
+    // Encontrar parte inteira e decimal
+    let [parteInteira, parteDecimal] = valorFormatado.split(",");
+
+    // Formatar a parte inteira com separador de milhar
+    let parteInteiraFormatada = Number(parteInteira).toLocaleString("pt-BR");
+
+    // Retorna número formatado
+    return parteDecimal
+      ? `${parteInteiraFormatada},${parteDecimal}`
+      : parteInteiraFormatada;
+
+    /**
+     * Neste metodo não consigo garantir as 3 casas decimais mesmo usando .toFixed(3) 
+     * return Number.parseFloat(valor).toLocaleString("pt-BR"); 
+    */
   };
 
   const numeroCartaoFormatado = (numCartao) => {
@@ -569,9 +584,9 @@ export default function GestaoDosSaldosECartoes() {
                 />
               </Box>
               {cartaoSelecionado ? (
-                <Box
+                <Box // ====== Informções sobre o cartão selecionado ======
                   sx={{
-                    flex: 0.8,
+                    flex: isMobile ? 1 : 0.8,
                     backgroundColor: "#f5f5f5",
                     borderRadius: "12px",
                     padding: "6px",
@@ -609,7 +624,7 @@ export default function GestaoDosSaldosECartoes() {
                 <></>
               )}
             </Box>
-            <ModalGerarEditarCard
+            <ModalGerarEditarCard  // ====== Modal Editar resposavel pelo cartão ======
               open={isModalOpen}
               onClose={handleCloseModalGerarEditarCard}
               mode={modalMode} //"gerar" // ou "editar"
@@ -617,12 +632,12 @@ export default function GestaoDosSaldosECartoes() {
                 modalMode === "editar" ? cartaoSelecionado?.num_cartao : ""
               }
               initialData={cardData}
-              onSubmit={handleFormSubmit}
+              onSubmit={handleSubmeterAlteracaoDeResponsavel}
             />
             {cartaoSelecionado ? (
               <Box>
                 <Box>
-                  {/* <IconButton
+                  <IconButton // ====== Editar resposavel pelo cartão ======
                     type="button"
                     aria-label="Criar cartão"
                     size="small"
@@ -637,7 +652,7 @@ export default function GestaoDosSaldosECartoes() {
                     onClick={() => {
                       handleOpenModalGerarEditarCard("editar", {
                         setor: cartaoSelecionado.label,
-                        responsavel: responsavel,
+                        responsavel: cartaoSelecionado.nomeResponsavel,
                       });
                     }}
                   >
@@ -650,8 +665,8 @@ export default function GestaoDosSaldosECartoes() {
                       }}
                     />
                     <Typography size="20px">Editar cartão</Typography>
-                  </IconButton> */}
-                  <FormControlLabel
+                  </IconButton>
+                  <FormControlLabel // ====== Bloquear/Desbloquear cartão ======
                     control={
                       <Checkbox
                         checked={!statusCartao}
@@ -665,7 +680,7 @@ export default function GestaoDosSaldosECartoes() {
                     }
                   />
                 </Box>
-                <ModalConfirmacao
+                <ModalConfirmacao // ====== Modal Bloquear/Desbloquear cartão ======
                   open={isModalConfirmacaoOpen}
                   onClose={handleCloseModalConfirmacao}
                   title="Confirmar Ação"
@@ -676,7 +691,7 @@ export default function GestaoDosSaldosECartoes() {
                   }
                   onConfirm={handleModalConfirmacao}
                 />
-                <Box
+                <Box // ====== Saldos do cartão | Adicionar/Remover saldos ======
                   sx={{
                     margin: "10px 0",
                     padding: "5px",

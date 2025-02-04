@@ -37,7 +37,7 @@ export default function ModalGerarEditarCard({
     if (isEdicao) {
       const hasChanged =
         formValues?.setor !== initialData?.setor ||
-        formValues?.responsavel !== initialData?.responsavel;
+        formValues?.responsavel.trim() !== initialData?.responsavel.trim();
       setButtonEnabled(hasChanged);
     } else {
       const allFieldsFilled =
@@ -51,7 +51,7 @@ export default function ModalGerarEditarCard({
     const value = event.target.value;
     if (
       (field === "setor" && value.length <= 30) ||
-      (field === "responsavel" && value.length <= 60)
+      (field === "responsavel" && value.length <= 40)
     ) {
       setFormValues((prev) => ({ ...prev, [field]: value }));
     }
@@ -80,12 +80,19 @@ export default function ModalGerarEditarCard({
         </IconButton>
       </DialogTitle>
       <DialogContent>
-        {isEdicao && (
-          <Typography sx={{ mb: 2 }}>
-            <strong>Número do Cartão:</strong> {cardNumber}
-          </Typography>
+        {isEdicao ? (
+          <>
+            <Typography sx={{ mb: 2 }}>
+              <strong>Número do Cartão:</strong> {cardNumber}
+            </Typography>
+            <Typography sx={{ mb: 2 }}>
+              <strong>Setor:</strong> {formValues.setor}
+            </Typography>
+          </>
+        ) : (
+          <></>
         )}
-        <TextField
+        {/* <TextField
           autoFocus
           required
           margin="dense"
@@ -95,15 +102,16 @@ export default function ModalGerarEditarCard({
           onChange={handleChange("setor")}
           fullWidth
           disabled={isEdicao}
-        />
+        /> */}
         <TextField
           required
+          style={{minWidth: "290px"}}
+          fullWidth
           margin="dense"
           name="responsavel"
           label="Responsável"
           value={formValues.responsavel}
           onChange={handleChange("responsavel")}
-          fullWidth
         />
       </DialogContent>
       <DialogActions>
