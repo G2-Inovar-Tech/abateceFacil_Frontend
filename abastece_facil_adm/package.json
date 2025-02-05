@@ -45,6 +45,5 @@
   },
   "devDependencies": {
     "gh-pages": "^6.2.0"
-  },
-  "homepage": "https://G2-Inovar-Tech.github.io/abateceFacil_Frontend/"
+  }
 }

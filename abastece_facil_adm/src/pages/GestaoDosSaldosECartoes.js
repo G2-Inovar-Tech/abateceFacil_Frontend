@@ -329,6 +329,7 @@ export default function GestaoDosSaldosECartoes() {
           TRA_COM_ID: Number.parseInt(tipoCombustivel[0]?.key),
           TRA_VALOR: saldoTransacao,
           TRA_USU_ID: Number.parseInt(userData.idUsuario),
+          PRE_ID: dados.prefeituraId,
         },
         {
           headers: {
