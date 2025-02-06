@@ -29,7 +29,7 @@ export default function MainLayout({ children, titlePage, loading }) {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: isMobile ? 1 : 3,
           marginTop: "75px",
         }}
       >
