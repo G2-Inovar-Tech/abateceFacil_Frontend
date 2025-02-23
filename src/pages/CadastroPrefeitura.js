@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import InputMask from "react-input-mask";
+
 import {
   TextField,
   Radio,
@@ -16,73 +18,96 @@ import backgroundImage from "../assets/backgroundHome.png"; // Importa a imagem
 
 export default function CadastroPrefeitura() {
   const [formData, setFormData] = useState({
+    nomefantasia: "",
     razaosocial: "",
-    cnpj: "",
-    contrato: "",
-    cep: "",
-    uf: "",
-    cidade: "",
-    logradouro: "",
-    numero: "",
-    status: "",
-    usuario: "",
     email: "",
     phone: "",
+    saldo: "",
   });
 
   const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    let newValue = value;
+
+    if (name === "saldo") {
+      newValue = value.replace(",", ".");
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
+
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.razaosocial.trim())
-      newErrors.razaosocial = "Razão social é obrigatório.";
-    if (!formData.cnpj.trim()) newErrors.cnpj = "CNPJ é obrigatório.";
-    if (!formData.contrato.trim())
-      newErrors.contrato = "Número do contrato é obrigatório.";
-    if (!formData.cep.trim()) newErrors.cep = "CEP é obrigatório.";
-    if (!formData.uf.trim()) newErrors.uf = "UF é obrigatório.";
-    if (!formData.cidade.trim()) newErrors.cidade = "Cidade é obrigatório.";
-    if (!formData.logradouro.trim())
-      newErrors.logradouro = "Logradouro é obrigatório.";
-    if (!formData.numero.trim()) newErrors.numero = "Número é obrigatório.";
-    if (!formData.status) newErrors.status = "Status é obrigatório.";
-    if (!formData.usuario.trim()) newErrors.usuario = "Usuário é obrigatório.";
-    if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email))
-      newErrors.email = "E-mail inválido.";
-    if (!formData.phone.trim() || !/^\d{10,15}$/.test(formData.phone))
+    if (!formData.nomefantasia.trim()) newErrors.nomefantasia = "Nome Fantasia é obrigatório";
+    if (!formData.razaosocial.trim()) newErrors.razaosocial = "Razão social é obrigatório.";
+    if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "E-mail inválido.";
+
+    const cleanedPhone = formData.phone.replace(/\D/g, ''); 
+    if (!cleanedPhone || cleanedPhone.length < 10 || cleanedPhone.length > 15) {
       newErrors.phone = "Telefone inválido (apenas números, 10-15 dígitos).";
+    }
+    if (!formData.saldo.trim() || !/^\d+([.,]\d{1,2})?$/.test(formData.saldo)) newErrors.saldo = "Saldo inválido (apenas números, com até 2 casas decimais).";
+
+
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (validate()) {
-      console.log("Formulário enviado com sucesso!", formData);
-      alert("Prefeitura cadastrado com sucesso!");
+      const requestData = {
+        PRE_NOME: formData.nomefantasia,
+        PRE_RAZAO_SOCIAL: formData.razaosocial,
+        PRE_TELEFONE: formData.phone,
+        PRE_EMAIL: formData.email,
+        PRE_SALDO_ATUAL: formData.saldo,
+      };
+
+      console.log("Dados enviados para a API:", JSON.stringify(requestData, null, 2));
+
+      try {
+        const response = await fetch("http://test.api.g2abastecimento.com.br/api/prefeitura", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "*/*",
+          },
+          body: JSON.stringify(requestData),
+        });
+
+        const responseData = await response.json();
+
+        if (response.ok) {
+          alert(responseData.message || "Prefeitura cadastrado com sucesso!");
+          handleCancel();
+        } else {
+          const errorMessages = responseData.erros
+            ? Object.values(responseData.erros).flat().join(", ")
+            : "Erro desconhecido";
+          alert(`Erro ao cadastrar Prefeitura: ${errorMessages}`);
+        }
+      } catch (error) {
+        console.error("Erro ao enviar dados:", error);
+        alert("Erro ao conectar com o servidor.");
+      }
     }
   };
 
   const handleCancel = () => {
     setFormData({
+      nomefantasia: "",
       razaosocial: "",
-      cnpj: "",
-      contrato: "",
-      cep: "",
-      uf: "",
-      cidade: "",
-      logradouro: "",
-      numero: "",
-      status: "",
-      usuario: "",
       email: "",
       phone: "",
+      saldo: "",
     });
     setErrors({});
   };
@@ -91,10 +116,11 @@ export default function CadastroPrefeitura() {
     <MainLayout>
       <Box
         sx={{
+
           backgroundImage: `url(${backgroundImage})`,
-          //backgroundSize: "cover", // Estica a imagem de background para ocupa todo espaço.
-          //backgroundPosition: "center", // Centraliza a imagem do background.
-          //backgroundRepeat: "no-repeat", // Deixa apenas uma imagem, sem repeti-la.
+          backgroundSize: "cover", // Estica a imagem de background para ocupa todo espaço.
+          backgroundPosition: "center", // Centraliza a imagem do background.
+          backgroundRepeat: "no-repeat", // Deixa apenas uma imagem, sem repeti-la.
           backgroundColor: "rgba(255, 255, 255, 0.8)", // Cor branca com transparência.
           backgroundBlendMode: "overlay", // Mistura o background transparente com a imagem.
           padding: 3,
@@ -118,7 +144,18 @@ export default function CadastroPrefeitura() {
             <form onSubmit={handleSubmit}>
               <TextField
                 fullWidth
-                label="Razão social"
+                label="Nome Fantasia"
+                name="nomefantasia"
+                value={formData.nomefantasia}
+                onChange={handleInputChange}
+                error={!!errors.nomefantasia}
+                helperText={errors.nomefantasia}
+                margin="normal"
+              />
+
+              <TextField
+                fullWidth
+                label="Razão Social"
                 name="razaosocial"
                 value={formData.razaosocial}
                 onChange={handleInputChange}
@@ -126,188 +163,64 @@ export default function CadastroPrefeitura() {
                 helperText={errors.razaosocial}
                 margin="normal"
               />
-              <Box sx={{ display: "flex", flexDirection: "row" }}>
+
+              {/* Box para os campos de E-mail e Telefone */}
+              <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
                 <TextField
                   fullWidth
-                  label="CNPJ"
-                  name="cnpj"
-                  value={formData.cnpj}
+                  label="E-mail"
+                  name="email"
+                  value={formData.email}
                   onChange={handleInputChange}
-                  error={!!errors.cnpj}
-                  helperText={errors.cnpj}
-                  margin="normal"
-                  sx={{ minWidth: "60%", marginRight: "20px" }}
-                />
-
-                <TextField
-                  fullWidth
-                  label="Contrato"
-                  name="contrato"
-                  value={formData.contrato}
-                  onChange={handleInputChange}
-                  error={!!errors.contrato}
-                  helperText={errors.contrato}
-                  margin="normal"
-                  maxWidth="30%"
-                />
-              </Box>
-              {/* ToDo: Criar um component Endereço */}
-              <Box
-                sx={{
-                  bgcolor: "background.paper",
-                  borderRadius: 2,
-                  boxShadow: 3,
-                  padding: "10px",
-                  margin: "16px 0 8px 0",
-                }}
-              >
-                <Typography
-                  variant="subtitle1"
-                  component="h1"
-                  gutterBottom
-                  align="justify"
-                >
-                  Dados de Endereço
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "row" }}>
-                  <TextField
-                    fullWidth
-                    label="Cidade"
-                    name="cidade"
-                    value={formData.cidade}
-                    onChange={handleInputChange}
-                    error={!!errors.cidade}
-                    helperText={errors.cidade}
-                    margin="normal"
-                    sx={{ minWidth: "60%", marginRight: "20px" }}
-                  />
-
-                  <TextField
-                    fullWidth
-                    label="UF"
-                    name="uf"
-                    value={formData.uf}
-                    onChange={handleInputChange}
-                    error={!!errors.uf}
-                    helperText={errors.uf}
-                    margin="normal"
-                    maxWidth="30%"
-                  />
-                </Box>
-
-                <TextField
-                  fullWidth
-                  label="Logradouro"
-                  name="logradouro"
-                  value={formData.logradouro}
-                  onChange={handleInputChange}
-                  error={!!errors.logradouro}
-                  helperText={errors.logradouro}
+                  error={!!errors.email}
+                  helperText={errors.email}
                   margin="normal"
                 />
 
-                <Box sx={{ display: "flex", flexDirection: "row" }}>
-                  <TextField
-                    fullWidth
-                    label="CEP"
-                    name="cep"
-                    value={formData.cep}
-                    onChange={handleInputChange}
-                    error={!!errors.cep}
-                    helperText={errors.cep}
-                    margin="normal"
-                    maxWidth="40%"
-                    sx={{ marginRight: "20px" }}
-                  />
 
-                  <TextField
-                    fullWidth
-                    label="Número"
-                    name="numero"
-                    value={formData.numero}
-                    onChange={handleInputChange}
-                    error={!!errors.numero}
-                    helperText={errors.numero}
-                    margin="normal"
-                  />
-                </Box>
-              </Box>
-
-              <TextField
-                fullWidth
-                label="E-mail"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                error={!!errors.email}
-                helperText={errors.email}
-                margin="normal"
-              />
-
-              <TextField
-                fullWidth
-                label="Telefone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                error={!!errors.phone}
-                helperText={errors.phone}
-                margin="normal"
-              />
-
-              <TextField
-                fullWidth
-                label="Usuário"
-                name="usurario"
-                value={formData.usuario}
-                onChange={handleInputChange}
-                error={!!errors.usuario}
-                helperText={errors.usuario}
-                margin="normal"
-              />
-
-              <FormControl component="fieldset" margin="normal">
-                <FormLabel component="legend">Status</FormLabel>
-                <RadioGroup
-                  row
-                  name="status"
-                  value={formData.status}
+                <InputMask
+                  mask="(99) 99999-9999"
+                  value={formData.phone}
                   onChange={handleInputChange}
                 >
-                  <FormControlLabel
-                    value="Ativo"
-                    control={<Radio />}
-                    label="Ativo"
-                  />
-                  <FormControlLabel
-                    value="Inativo"
-                    control={<Radio />}
-                    label="Inativo"
-                  />
-                </RadioGroup>
-                {errors.status && (
-                  <Typography color="error" variant="body2">
-                    {errors.status}
-                  </Typography>
-                )}
-              </FormControl>
+                  {(inputProps) => (
+                    <TextField
+                      {...inputProps}
+                      label="Telefone"
+                      name="phone"
+                      error={!!errors.phone}
+                      helperText={errors.phone}
+                      margin="normal"
+                    />
+                  )}
+                </InputMask>
+              </Box>
 
-              <Box
-                sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}
-              >
+              {/* CAMPO DO SALDO*/}
+              <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-start" }}>
+                <TextField
+                  label="Saldo"
+                  name="saldo"
+                  value={formData.saldo}
+                  onChange={handleInputChange}
+                  error={!!errors.saldo}
+                  helperText={errors.saldo}
+                  margin="normal"
+                  sx={{ width: "30%" }}
+                />
+              </Box>
+
+
+              <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
+                <Button type="button" variant="outlined" color="secondary" onClick={handleCancel}>
+                  Cancelar
+                </Button>
                 <Button type="submit" variant="contained" color="primary">
                   Cadastrar
                 </Button>
-                <Button
-                  type="button"
-                  variant="outlined"
-                  color="secondary"
-                  onClick={handleCancel}
-                >
-                  Cancelar
-                </Button>
               </Box>
             </form>
+
           </Box>
         </Container>
       </Box>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import InputMask from "react-input-mask"; // Importando a biblioteca
 
 import {
   TextField,
@@ -35,8 +36,10 @@ export default function CadastroUsuario() {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Nome é obrigatório.";
     if (!formData.type) newErrors.type = "Tipo é obrigatório.";
-    if (!formData.phone.trim() || !/^\d{10,15}$/.test(formData.phone))
+    const cleanedPhone = formData.phone.replace(/\D/g, ''); 
+    if (!cleanedPhone || cleanedPhone.length < 10 || cleanedPhone.length > 15) {
       newErrors.phone = "Telefone inválido (apenas números, 10-15 dígitos).";
+    }
     if (!formData.login.trim()) newErrors.login = "Login é obrigatório.";
     if (!formData.password) newErrors.password = "Senha é obrigatória.";
 
@@ -100,11 +103,15 @@ export default function CadastroUsuario() {
 
   return (
     <MainLayout>
+      
       <Box
         sx={{
           backgroundImage: `url(${backgroundImage})`,
-          backgroundColor: "rgba(255, 255, 255, 0.8)",
-          backgroundBlendMode: "overlay",
+          backgroundSize: "cover", // Estica a imagem de background para ocupa todo espaço.
+          backgroundPosition: "center", // Centraliza a imagem do background.
+          backgroundRepeat: "no-repeat", // Deixa apenas uma imagem, sem repeti-la.
+          backgroundColor: "rgba(255, 255, 255, 0.8)", // Cor branca com transparência.
+          backgroundBlendMode: "overlay", // Mistura o background transparente com a imagem.
           padding: 3,
           borderRadius: 2,
           boxShadow: 3,
@@ -145,7 +152,6 @@ export default function CadastroUsuario() {
                   <FormControlLabel value="ADM" control={<Radio />} label="ADM" />
                   <FormControlLabel value="PREFEITURA" control={<Radio />} label="PREFEITURA" />
                   <FormControlLabel value="POSTO" control={<Radio />} label="POSTO" />
-
                 </RadioGroup>
                 {errors.type && (
                   <Typography color="error" variant="body2">
@@ -153,17 +159,23 @@ export default function CadastroUsuario() {
                   </Typography>
                 )}
               </FormControl>
-
-              <TextField
-                fullWidth
-                label="Telefone"
-                name="phone"
+              
+              <InputMask
+                mask="(99) 99999-9999" 
                 value={formData.phone}
                 onChange={handleInputChange}
-                error={!!errors.phone}
-                helperText={errors.phone}
-                margin="normal"
-              />
+              >
+                {(inputProps) => (
+                  <TextField
+                    {...inputProps}
+                    label="Telefone"
+                    name="phone"
+                    error={!!errors.phone}
+                    helperText={errors.phone}
+                    margin="normal"
+                  />
+                )}
+              </InputMask>
 
               <TextField
                 fullWidth

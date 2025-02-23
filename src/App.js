@@ -15,6 +15,12 @@ import Configuracoes from "./pages/Configuracoes.js";
 import HomePrefeitura from "./pages/HomePrefeitura.js";
 import GestaoDosSaldosECartoes from "./pages/GestaoDosSaldosECartoes";
 import HistoricoPrefeitura from "./pages/HistoricoPrefeitrua.js";
+import CadastroCartao from "./pages/CadastrarCartao.js";
+import CadastroVeiculo from "./pages/CadastroVeiculo.js";
+import ContratoPrefeitura from "./pages/ContratoPrefeitura.js";
+import VincularPostoContrato from "./pages/VincularPostoContrato.js";
+import VincularUsuarioPrefeitura from "./pages/VincularUsuarioPrefeitura.js";
+
 
 function App() {
   return (
@@ -34,6 +40,13 @@ function App() {
             <Route path="/cadastro-prefeitura" element={<Cadastroprefeitura />} />
             <Route path="/cadastro-posto" element={<CadastroPosto />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
+            <Route path="/cadastro-cartao" element={<CadastroCartao />} />
+            <Route path="/cadastro-veiculo" element={<CadastroVeiculo />} />
+            <Route path="/contrato-prefeitura" element={<ContratoPrefeitura />} />
+            <Route path="/vincular-posto-contrato" element={<VincularPostoContrato />} />
+            <Route path="/vincular-usuario-prefeitura" element={<VincularUsuarioPrefeitura />} />
+
+
           </Route>
 
           {/* Rotas para Prefeitura */}
