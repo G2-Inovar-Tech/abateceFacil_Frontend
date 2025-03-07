@@ -86,7 +86,7 @@ export default function GerenciarPrefeituras() {
     }
     else setTitle("");
 
-    console.log("Você pesquisou por:", prefeitura);
+//console.log("Você pesquisou por:", prefeitura);
   };
 
   const handleCancel = () => {
@@ -116,7 +116,7 @@ export default function GerenciarPrefeituras() {
 
   const setarCartaoDestino = (texto) => {
     setCartaoDestino(texto);
-    console.log(texto);
+   // console.log(texto);
     if(saldoTransacao > 0 && texto)
       setDesabilitarSalvar(false);
     else
@@ -171,7 +171,7 @@ export default function GerenciarPrefeituras() {
   const handleCloseModalGerarEditarCard = () => setModalOpen(false); // Fecar modal Gerar/Editar cartão
   const handleFormSubmit = (formData) => { // Aplicar edição de cartão na propria pagina
     if (modalMode === "editar") {
-      console.log("Dados recebidos do modal:", formData);
+     // console.log("Dados recebidos do modal:", formData);
       setResponsavel(formData?.responsavel);
       setCartaoSelecionado({
         label: formData?.setor,
@@ -185,7 +185,7 @@ export default function GerenciarPrefeituras() {
   const handleModalConfirmacao = (confirmed) => { // Aplicar confirmação de (des)bloqueio de cartão
     if (confirmed) {
       setStatusCartao(!statusCartao);
-      console.log("Ação confirmada!");
+      //console.log("Ação confirmada!");
     }
   };
 

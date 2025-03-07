@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { data, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
+import Constants from "../components/Constant.js";
 import {
   Box,
   Typography,
@@ -84,10 +85,11 @@ export default function HomePrefeitura() {
     "Prefeitura de Jaguaguara",
   ];
 
-  const [title, setTitle] = useState("Abastece Fácil - Prefeitura de ...");
+  const [title, setTitle] = useState("G2 Abastecimento");
 
   const location = useLocation();
   const navigate = useNavigate();
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
   
   const handleAccess = () => {
     const redirectTo = location.state?.from?.pathname || "/home-prefeitura";
@@ -110,7 +112,7 @@ export default function HomePrefeitura() {
     // }
     setTimeout(() => { // Simula um atraso de 1 segundos para carregar os dados
       if (token) {
-        setTitle("Abastece Fácil - Prefeitura de " + nomePrefeitura);
+        setTitle("G2 Abastecimento - Prefeitura de " + nomePrefeitura);
         setUserData({ token, idUsuario, idPrefeitura, idAdm, profile });
         //handleBuscarInfo();
         //setLoading(false);
@@ -125,6 +127,7 @@ export default function HomePrefeitura() {
   },[userData]);
 
   const handleBuscarInfo = async () => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     setLoading(true);
 
     // if (userData) {
@@ -134,10 +137,10 @@ export default function HomePrefeitura() {
     // }
     
     try {
-      console.log(userData?.idPrefeitura)
-      console.log("Tentando conexão com o servidor...");
+      //console.log(userData?.idPrefeitura)
+      //console.log("Tentando conexão com o servidor...");
       const response = await axios.get(
-        `https://g2inovartech.com.br/api/listarPrefeitura/${userData.idPrefeitura}`,
+        `${Constants.API_BASE_URL}/api/listarPrefeitura/${userData.idPrefeitura}`,
         {
           headers: {
             'Authorization': `Bearer ${userData.token}`,
@@ -145,7 +148,7 @@ export default function HomePrefeitura() {
           }
         }
       );
-      console.log("Depois de conexão com o servidor...");
+     // console.log("Depois de conexão com o servidor...");
       //console.log(response.data);
 
       const jsonData = response.data;
@@ -193,11 +196,11 @@ export default function HomePrefeitura() {
       
       //handleAccess(tipoUser);
     } catch (error) {
-      console.log(error);
+    //  console.log(error);
       const errorMessage =
         error.response?.data?.message || "Erro ao buscar dados. Tente novamente.";
       alert("Erro:\n" + errorMessage);
-      console.log("Erro: " + errorMessage);
+    //  console.log("Erro: " + errorMessage);
     } finally {
       setLoading(false);
     }

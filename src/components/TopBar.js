@@ -17,7 +17,7 @@ import imagemPerfil from "../assets/imagemPerfil.jpg";
 
 export default function TopBar({ open, handleDrawerToggle, title }) {
   const { logout } = useAuth();
-  const titlePage = title? title : "Abastece Facil";
+  const titlePage = title? title : "G2 Abastecimento";
   return (
     <AppBar
       position="fixed"

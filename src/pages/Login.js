@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
+import Constants from "../components/Constant.js";
 import {
   TextField,
   Button,
@@ -10,31 +11,36 @@ import {
   Container,
   Typography,
   useMediaQuery,
-  FormControlLabel,
-  Checkbox,
+  IconButton,
+  InputAdornment,
+  Snackbar,
+  Alert,
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { styled } from "@mui/system";
 import SmallLoader from "../components/SmallLoader.js";
-import backgroundImage from "../assets/backgroundHome.png"; // Importa a imagem
+import backgroundImage from "../assets/backgroundHome.png";
 
 export default function Login() {
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [errors, setErrors] = useState({});
   const { login, isAuthenticated } = useAuth();
-  const [rememberMe, setRememberMe] = useState(false); // Estado para lembrar-me
+  const [showPassword, setShowPassword] = useState(false);
   const isSmallScreen = useMediaQuery("(max-width:600px)");
   const location = useLocation();
-  
   const navigate = useNavigate();
-  
+  const [loading, setLoading] = useState(false);
+
+  // Snackbar
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("info");
+
   const handleAccess = (profile) => {
-    if(profile === "ADM") {
-      const redirectTo = location.state?.from?.pathname || "/home";
-      navigate(redirectTo); // Navega para a página Home
-    }
-    else if(profile === "PREFEITURA") {
-      const redirectTo = location.state?.from?.pathname || "/home-prefeitura";
-      navigate(redirectTo); // Navega para a página HomePrefeitura
+    if (profile === "ADM") {
+      navigate(location.state?.from?.pathname || "/home");
+    } else if (profile === "PREFEITURA") {
+      navigate(location.state?.from?.pathname || "/home-prefeitura");
     }
   };
 
@@ -45,190 +51,151 @@ export default function Login() {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.username.trim())
-      newErrors.username = "Usuário é obrigatório.";
+    if (!formData.username.trim()) newErrors.username = "Usuário é obrigatório.";
     if (!formData.password.trim()) newErrors.password = "Senha é obrigatória.";
     setErrors(newErrors);
-    setLoading(false);
     return Object.keys(newErrors).length === 0;
   };
 
-  const [loading, setLoading] = useState(false);
   const handleLogin = async () => {
     setLoading(true);
-
-    if (!formData.username || !formData.password) {
-      validate();
-      //alert("Atenção!\n\nPor favor, preencha todos os campos.");
-      console.log("Atenção!\n\nPor favor, preencha todos os campos.");
+    if (!validate()) {
+      setLoading(false);
       return;
     }
-    
+
     try {
-      console.log("Tentando conexão com o servidor...");
       const response = await axios.post(
-        "https://g2inovartech.com.br/api/login",
-        {
-          login: formData.username,
-          password: formData.password,
-          tipo: "web",
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "*/*",
-          },
-        }
+        Constants.API_LOGIN,
+        { login: formData.username, password: formData.password, tipo: "web" },
+        { headers: { "Content-Type": "application/json", "Accept": "*/*" } }
       );
-      console.log("Depois de conexão com o servidor...");
-      //console.log(response.data);
 
-      const { token } = response.data;
-      const { user } = response.data;
+      const { token, user } = response.data;
 
-      let idUsuario = `${user.USU_ID}`;
-      let idPrefeitura = user.PRE_ID ? `${user.PRE_ID}` : "";
-      let idAdm = user.ADM_ID ? `${user.ADM_ID}` : "";
-      let tipoUser = user.USU_TIPO;
-      let nomePrefeitura = user.PRE_NOME ? user.PRE_NOME : "";
-      
-      login(rememberMe, tipoUser, {token, idUsuario, idPrefeitura, idAdm, nomePrefeitura});
-      handleAccess(tipoUser);
+      // Armazenar o token no localStorage
+      localStorage.setItem("token", token);
+
+      // Chamar a função de login do contexto de autenticação
+      login(false, user.USU_TIPO, {
+        token,
+        idUsuario: `${user.USU_ID}`,
+        idPrefeitura: user.PRE_ID ? `${user.PRE_ID}` : "",
+        idAdm: user.ADM_ID ? `${user.ADM_ID}` : "",
+        nomePrefeitura: user.PRE_NOME || "",
+      });
+
+      // Redirecionar o usuário com base no perfil
+      handleAccess(user.USU_TIPO);
+
+      // Exibir mensagem de sucesso
+      showSnackbar("Login realizado com sucesso!", "success");
     } catch (error) {
-      console.log(error);
-      const errorMessage =
-        error.response?.data?.message || "Erro ao realizar login. Tente novamente.";
-      alert("Erro:\n" + errorMessage);
-      console.log("Erro: " + errorMessage);
+      const errorMessage = error.response?.data?.message || "Erro ao realizar login. Tente novamente.";
+      showSnackbar(errorMessage, "error");
     } finally {
       setLoading(false);
     }
   };
 
-  // Redireciona para Home se já autenticado
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleLogin();
+  };
+
+  // Snackbar functions
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
+  const showSnackbar = (message, severity = "info") => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
   React.useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/home", { replace: true });
-    }
+    if (isAuthenticated) navigate("/home", { replace: true });
   }, [isAuthenticated, navigate]);
 
-  // Estilização customizada para a imagem do lado esquerdo
   const LeftImage = styled("div")(({ theme }) => ({
     flex: 1,
     backgroundImage: `url(${backgroundImage})`,
     backgroundSize: "cover",
     backgroundPosition: "center",
-    [theme.breakpoints.down("sm")]: {
-      flex: 0,
-      height: "40vh",
-    },
+    [theme.breakpoints.down("sm")]: { flex: 0, height: "40vh" },
   }));
 
   return (
-    <Box
-      display="flex"
-      height="100vh"
-      sx={{
-        backgroundImage: isSmallScreen ? `url(${backgroundImage})` : "none",
-        //backgroundSize: "cover", // Estica a imagem de background para ocupa todo espaço.
-        //backgroundPosition: "center", // Centraliza a imagem do background.
-        //backgroundRepeat: "no-repeat", // Deixa apenas uma imagem, sem repeti-la.
-        backgroundColor: "rgba(255, 255, 255, 0.8)", // Cor branca com transparência.
-        backgroundBlendMode: "overlay", // Mistura o background transparente com a imagem.
-      }}
-    >
+    <Box display="flex" height="100vh" sx={{ backgroundImage: isSmallScreen ? `url(${backgroundImage})` : "none", backgroundColor: "rgba(255, 255, 255, 0.8)", backgroundBlendMode: "overlay" }}>
       {!isSmallScreen && <LeftImage />}
-      <Container
-        maxWidth="xs"
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          flex: 1,
-          padding: 4,
-        }}
-      >
+      <Container maxWidth="xs" sx={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", flex: 1, padding: 4 }}>
         <Box>
-          <Box
-            sx={{
-              marginBottom: "40px",
-            }}
-          >
-            <Typography
-              variant="h4"
-              gutterBottom
-              align="center"
-              color={isSmallScreen ? "#02153D" : "#808A9E"}
-              sx={{
-                fontWeight: "700",
-                textTransform: "uppercase",
-                //textShadow: "1px 1px 2px white, 0 0 0.2em blue, 0 0 0.05em #808A9E", // Adiciona sombreado ao texto.
-              }}
-            >
-              Gestão Abastece Fácil
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              p: 4,
-              bgcolor: "background.paper",
-              borderRadius: 2,
-              boxShadow: 3,
-              //backgroundColor: isSmallScreen ? "#FFFFFF00" : "", // Deixar fundo transparente.
-            }}
-          >
+          <Typography variant="h4" gutterBottom align="center" color={isSmallScreen ? "#02153D" : "#808A9E"} sx={{ fontWeight: "700", textTransform: "uppercase" }}>
+            Gestão Abastece Fácil
+          </Typography>
+          <Box sx={{ p: 4, bgcolor: "background.paper", borderRadius: 2, boxShadow: 3 }}>
             <Typography variant="h5" gutterBottom align="center">
               Login
             </Typography>
-              <TextField
+            <TextField
+              fullWidth
+              label="Usuário"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              error={!!errors.username}
+              helperText={errors.username}
+              margin="normal"
+            />
+            <TextField
+              fullWidth
+              type={showPassword ? "text" : "password"}
+              label="Senha"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              error={!!errors.password}
+              helperText={errors.password}
+              margin="normal"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Box mt={2}>
+              <Button
+                variant="contained"
+                color="primary"
                 fullWidth
-                label="Usuário"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                error={!!errors.username}
-                helperText={errors.username}
-                margin="normal"
-              />
-              <TextField
-                fullWidth
-                type="password"
-                label="Senha"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                error={!!errors.password}
-                helperText={errors.password}
-                margin="normal"
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    color="primary"
-                  />
-                }
-                label="Mantenha-me conectado"
-              />
-              <Box mt={2}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  sx={{
-                    backgroundColor: "#808A9E",
-                  }}
-                  disabled={loading}
-                  onClick={handleLogin}
-                >
-                  {loading ? <SmallLoader size={20} /> : "Acessar"}
-                </Button>
-              </Box>
+                sx={{ backgroundColor: "#808A9E" }}
+                disabled={loading}
+                onClick={handleLogin}
+              >
+                {loading ? <SmallLoader size={20} /> : "Acessar"}
+              </Button>
+            </Box>
           </Box>
         </Box>
       </Container>
+
+      {/* Snackbar para mensagens de erro e sucesso */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

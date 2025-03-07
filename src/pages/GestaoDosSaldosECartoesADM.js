@@ -29,6 +29,7 @@ import ModalConfirmacao from "../components/ModalConfirmacao.js";
 import backgroundImage from "../assets/backgroundHome.png";
 import Constants from "../components/Constant.js";
 
+
 export default function GestaoDosSaldosECartoes() {
   const isMobile = useMediaQuery("(max-width:600px)"); // Detecta telas pequenas
 
@@ -58,6 +59,14 @@ export default function GestaoDosSaldosECartoes() {
   const [userData, setUserData] = useState(null);
   const [dados, setDados] = useState(null);
 
+  const [prefeituras, setPrefeituras] = useState([]);
+  const [prefeituraSelecionada, setPrefeituraSelecionada] = useState(null);
+  const [searchPrefeitura, setSearchPrefeitura] = useState(""); // Estado para o valor de busca
+
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const statusCartaoTexto = cartaoSelecionado?.status === "ATIVO" ? "Ativo" : "Bloqueado";
+
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
@@ -79,6 +88,7 @@ export default function GestaoDosSaldosECartoes() {
       showSnackbar("Erro ao realizar operação!", "error");
     }
   };
+
   const combustiveis = [
     { key: "0", valor: "" },
     { key: "1", valor: "Etanol" },
@@ -95,8 +105,7 @@ export default function GestaoDosSaldosECartoes() {
     const total = saldosCombustiveis
       .reduce((total, saldo) => total + saldo.valor, 0)
       .toFixed(3);
-  
-   
+      
     return total.replace(".", ",");
   };
 
@@ -111,21 +120,158 @@ export default function GestaoDosSaldosECartoes() {
     setSelectedCombustivelparaSaldo(valorSelecionado);
   };
 
+
+
+  //*****
   useEffect(() => {
+    const fetchPrefeituras = async () => {
+      try {
+        const response = await axios.get(`${Constants.API_BASE_URL}/api/prefeitura`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': '*/*',
+          }
+        });
+
+        if (response.data && Array.isArray(response.data.prefeituras)) {
+          setPrefeituras(response.data.prefeituras);
+        } else {
+          setPrefeituras([]);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar prefeituras:", error.response?.data || error.message);
+        setPrefeituras([]);
+      }
+    };
+
+    fetchPrefeituras();
+  }, []);
+
+  const fetchCartoes = async (idPrefeitura) => {
+    if (!idPrefeitura) return; // Evita chamadas desnecessárias
+
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token"); // Obtém o token do localStorage ou sessionStorage
+      const response = await axios.get(`${Constants.API_BASE_URL}/api/listarPrefeitura/${idPrefeitura}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`, // Inclui o token no cabeçalho
+          'Accept': '*/*',
+        }
+      });
+      // console.log("Resposta da API para cartões comuns:", response.data); // Log para depuração
+
+
+
+      if (response.data && response.data.prefeitura) {
+        const cartoesFormatados = response.data.prefeitura.cartoes
+          .filter((cartao) => cartao.CAR_TIPO !== "MASTER")
+          .map((cartao) => ({
+            id: cartao.CAR_ID,
+            label: cartao.orgao?.ORG_DESCRICAO
+              ? cartao.orgao.ORG_DESCRICAO.length > 30
+                ? cartao.orgao.ORG_DESCRICAO.substring(0, 27) + "..."
+                : cartao.orgao.ORG_DESCRICAO
+              : "Descrição não disponível",
+            num_cartao: numeroCartaoFormatado(cartao.CAR_ID),
+            nomeResponsavel: cartao.CAR_RESP_NOME
+              ? cartao.CAR_RESP_NOME.length > 43
+                ? cartao.CAR_RESP_NOME.substring(0, 40) + ""
+                : cartao.CAR_RESP_NOME
+              : "Nome não disponível",
+            status: cartao.CAR_STATUS,
+            saldos: cartao.saldos?.map((saldo) => ({
+              tipo: saldo.combustivel?.COM_DESCRICAO || "Tipo não disponível",
+              valor: formatarValor(saldo.SAL_VALOR || 0),
+            })) || [],
+          }));
+
+        setCartoes(cartoesFormatados);
+        // console.log("Cartões comuns carregados:", cartoesFormatados); // Confirmação de que os cartões foram salvos no estado
+      } else {
+        setCartoes([]);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar cartões:", error);
+      setCartoes([]); // Em caso de erro, limpa os cartões
+    }
+  };
+
+
+  const handleSelectPrefeitura = async (idPrefeitura) => {
+    if (!idPrefeitura) {
+      console.warn("Tentativa de carregar dados sem ID de prefeitura.");
+      return;
+    }
+
+    setPrefeituraSelecionada(idPrefeitura);
+    setLoading(true);
+
+    try {
+      const response = await axios.get(`${Constants.API_BASE_URL}/api/listarPrefeitura/${idPrefeitura}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': '*/*',
+        }
+      });
+      // console.log("Dados recebidos da API:", response.data);
+
+      if (response.data && response.data.status && response.data.prefeitura) {
+        const prefeitura = response.data.prefeitura;
+        setDados(prefeitura);
+
+        // 🔹 Busca o cartão MASTER da prefeitura
+        const cartaoMaster = prefeitura.cartoes?.find((cartao) => cartao.CAR_TIPO === "MASTER");
+
+        setDados({
+          prefeituraId: prefeitura.PRE_ID,
+          nomePrefeitura: prefeitura.PRE_NOME,
+          saldoAtual: prefeitura.PRE_SALDO_ATUAL,
+          emailPrefeitura: prefeitura.PRE_EMAIL,
+        });
+
+        if (cartaoMaster) {
+          const saldosFixos = cartaoMaster.saldos.map((saldo) => ({
+            tipo: saldo.combustivel.COM_DESCRICAO,
+            valor: parseFloat(saldo.SAL_VALOR),
+          }));
+          setSaldosCombustiveis(saldosFixos);
+        } else {
+          setSaldosCombustiveis([]);
+        }
+
+        // 🔹 Agora busca os cartões comuns
+        fetchCartoes(idPrefeitura); // Chamada da função fetchCartoes
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados da prefeitura:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  // Filtra as prefeituras com base no valor de busca
+  const filteredPrefeituras = prefeituras.filter((prefeitura) =>
+    prefeitura.PRE_NOME.toLowerCase().includes(searchPrefeitura.toLowerCase())
+  );
+
+  //**** 
+
+  useEffect(() => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     const fetchCartaoData = async () => {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token"); // Obtém o token
       try {
         const response = await axios.get(`${Constants.API_BASE_URL}/api/cartao`, {
           headers: {
-            Authorization: `Bearer ${token}`, // Inclui o token no cabeçalho
-            Accept: "*/*",
-          },
+            'Authorization': `Bearer ${userData.token}`,
+            'Accept': '*/*',
+          }
         });
         setCartaoData(response.data);
       } catch (error) {
         console.error("Erro ao buscar dados do cartão:", error);
-       // setSnackbarMessage("Erro ao buscar dados do cartão.");
-       // setOpenSnackbar(true);
+        //setSnackbarMessage("Erro ao buscar dados do cartão.");
+        // setOpenSnackbar(true);
       }
     };
 
@@ -135,16 +281,30 @@ export default function GestaoDosSaldosECartoes() {
   useEffect(() => {
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     const idUsuario = localStorage.getItem("idUsuario") || sessionStorage.getItem("idUsuario");
-    const idPrefeitura = localStorage.getItem("idPrefeitura") || sessionStorage.getItem("idPrefeitura");
+    const idPrefeitura = localStorage.getItem("idPrefeitura") || sessionStorage.getItem("idPrefeitura"); // ⚠️ Pegando ID da prefeitura
     const idAdm = localStorage.getItem("idAdm") || sessionStorage.getItem("idAdm");
     const profile = localStorage.getItem("profile") || sessionStorage.getItem("profile");
     const nomePrefeitura = localStorage.getItem("nomePrefeitura") || sessionStorage.getItem("nomePrefeitura");
 
     if (token) {
-      setTitle("G2 Abastecimento - " + nomePrefeitura);
+      setTitle("G2 Abastecimento " + nomePrefeitura);
       setUserData({ token, idUsuario, idPrefeitura, idAdm, profile });
+
+      // 🔹 Se o ID da prefeitura não estiver definido, peça para o usuário selecionar uma prefeitura antes de carregar os dados
+      if (!idPrefeitura) {
+        console.warn("Nenhuma prefeitura associada ao usuário ADM.");
+        setLoading(false); // Para evitar loop de carregamento infinito
+        return;
+      }
+
+      // 🔹 Carrega os dados da prefeitura após obter o ID
+      setPrefeituraSelecionada(idPrefeitura);
+      handleSelectPrefeitura(idPrefeitura);
+    } else {
+      setLoading(false);
     }
   }, []);
+
 
   useEffect(() => {
     if (userData?.token && userData?.idPrefeitura) {
@@ -153,84 +313,61 @@ export default function GestaoDosSaldosECartoes() {
   }, [userData]);
 
   const handleBuscarInfo = async () => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     setLoading(true);
     try {
       const response = await axios.get(
         `${Constants.API_BASE_URL}/api/listarPrefeitura/${userData.idPrefeitura}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "*/*",
+            'Authorization': `Bearer ${token}`,
+            'Accept': '*/*',
           },
         }
       );
-  
+
       const jsonData = response.data;
-  
+
       if (jsonData.status) {
         const prefeitura = jsonData.prefeitura;
         const { PRE_ID, PRE_NOME, PRE_SALDO_ATUAL, PRE_EMAIL } = prefeitura;
-        const endereco = prefeitura.endereco || {}; // Verificação para evitar erros
+        const endereco = prefeitura.endereco;
         const { END_CIDADE, END_ESTADO, END_CEP } = endereco;
-        const contratos = prefeitura.contratos || []; // Verificação para evitar erros
+        const contratos = prefeitura.contratos;
         const saldoContrato = contratos.length > 0 ? contratos[0].CON_SALDO_CONTRATO : "0.000";
-        const cartoes = prefeitura.cartoes || []; // Verificação para evitar erros
+        const cartoes = prefeitura.cartoes;
         const cartaoMaster = cartoes.find((cartao) => cartao.CAR_TIPO === "MASTER");
-  
+
         if (cartaoMaster) {
-          const saldosFixos = (cartaoMaster.saldos || []).map((saldo) => ({
-            tipo: saldo.combustivel?.COM_DESCRICAO || "Tipo não disponível", // Verificação para evitar erros
-            valor: parseFloat(saldo.SAL_VALOR || 0), // Verificação para evitar erros
+          const saldosFixos = cartaoMaster.saldos.map((saldo) => ({
+            tipo: saldo.combustivel.COM_DESCRICAO,
+            valor: parseFloat(saldo.SAL_VALOR),
           }));
           setSaldosCombustiveis(saldosFixos);
         } else {
           setSaldosCombustiveis([]);
         }
-  
-        const saldoCartaoMaster = (cartaoMaster?.saldos || []).reduce((total, saldo) => total + parseFloat(saldo.SAL_VALOR || 0), 0);
+
+        const saldoCartaoMaster = cartaoMaster?.saldos?.reduce((total, saldo) => total + parseFloat(saldo.SAL_VALOR), 0) || 0;
         const saldoNosCartoes = (parseFloat(PRE_SALDO_ATUAL) - saldoCartaoMaster).toFixed(3);
-  
-        if (cartoes.length > 0) {
-          const cartoesFormatados = cartoes
-            .filter((cartao) => cartao.CAR_TIPO && cartao.CAR_TIPO !== "MASTER") // Verificação adicional
-            .map((cartao) => ({
-              id: cartao.CAR_ID,
-              label:
-                cartao.orgao?.ORG_DESCRICAO && cartao.orgao.ORG_DESCRICAO.length > 30
-                  ? cartao.orgao.ORG_DESCRICAO.substring(0, 27) + "..."
-                  : cartao.orgao?.ORG_DESCRICAO || "Descrição não disponível", // Verificação para evitar erros
-              num_cartao: numeroCartaoFormatado(cartao.CAR_ID),
-              nomeResponsavel:
-                cartao.CAR_RESP_NOME && cartao.CAR_RESP_NOME.length > 43
-                  ? cartao.CAR_RESP_NOME.substring(0, 40) + ""
-                  : cartao.CAR_RESP_NOME || "Nome não disponível", // Verificação para evitar erros
-              status: cartao.CAR_STATUS || "Status não disponível", // Verificação para evitar erros
-              saldos: (cartao.saldos || []).map((saldo) => ({
-                tipo: saldo.combustivel?.COM_DESCRICAO || "Tipo não disponível", // Verificação para evitar erros
-                valor: formatarValor(saldo.SAL_VALOR || 0), // Verificação para evitar erros
-              })),
-            }));
-          setCartoes(cartoesFormatados);
-        }
-  
+
         setDados({
-          prefeituraId: PRE_ID,
-          nomePrefeitura: PRE_NOME,
-          saldoAtual: PRE_SALDO_ATUAL,
+          prefeituraId: prefeitura.PRE_ID,
+          nomePrefeitura: prefeitura.PRE_NOME,
+          saldoAtual: prefeitura.PRE_SALDO_ATUAL,
           saldoLivre: saldoCartaoMaster.toFixed(3),
           saldoNosCartoes,
-          emailPrefeitura: PRE_EMAIL,
+          emailPrefeitura: prefeitura.PRE_EMAIL,
         });
       }
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
-     // setSnackbarMessage("Erro ao buscar dados. Tente novamente.");
+      //  setSnackbarMessage("Erro ao buscar dados. Tente novamente.");
       //setOpenSnackbar(true);
     } finally {
       setLoading(false);
     }
   };
+
   const handleCancel = () => {
     setCartaoSelecionado(null);
     setSelectedOption("");
@@ -260,7 +397,6 @@ export default function GestaoDosSaldosECartoes() {
   };
 
   const setarCartaoDestino = (texto) => {
-    
     setCartaoDestino(texto);
     if (saldoTransacao > 0 && texto) {
       setDesabilitarSalvar(false);
@@ -337,125 +473,155 @@ export default function GestaoDosSaldosECartoes() {
   };
 
 
+  const formatarMoeda = (valor) => {
+    if (!valor) return "";
 
+    // Remove tudo que não for número
+    let numero = valor.replace(/\D/g, "");
 
-// Converter para API (remove pontos e vírgulas)
-const converterParaAPI = (valor) => {
-  if (!valor) return 0;
+    // Aplica formatação correta
+    if (numero.length > 6) {
+      // Milhões: separa casa dos milhões com ponto e milhar com vírgula
+      numero = numero.replace(/^(\d+)(\d{3})(\d{3})$/, "$1.$2,$3");
+    } else if (numero.length > 3) {
+      // Milhares: separa com vírgula
+      numero = numero.replace(/^(\d+)(\d{3})$/, "$1,$2");
+    }
 
-  valor = valor.replace("R$ ", "");  // Remove "R$ "
-  valor = valor.replace(",", ".");  // Substitui a vírgula por ponto
-  const resultado = parseFloat(valor);
-
- // console.log("Valor após conversão:", resultado); // Verifique se o valor está correto
-  return isNaN(resultado) ? 0 : resultado;
-};
-
-// Atualiza o campo de valor com a formatação correta
-const handleChangeValor = (event) => {
-  let inputValue = event.target.value;
-
-  // Remove tudo que não for número ou vírgula
-  inputValue = inputValue.replace(/[^\d,]/g, "");
-
-  // Garante que haja apenas uma vírgula
-  const indexVirgula = inputValue.indexOf(",");
-  if (indexVirgula !== -1) {
-    // Limita a 3 casas decimais após a vírgula
-    inputValue = inputValue.substring(0, indexVirgula + 4);
-  }
-
-  // Adiciona "R$ " antes do valor formatado
-  setSaldoText("R$ " + inputValue);
-};
-
-
-
-const adicionarRemoverSaldo = async () => {
-  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-  setLoading(true);
-
-  const valorConvertido = converterParaAPI(saldoText);
-
-  if (isNaN(valorConvertido) || valorConvertido <= 0) {
-    alert("O valor do saldo deve ser maior que zero!");
-    setLoading(false);
-    return;
-  }
-
-  const tipoCombustivel = combustiveis.find(
-    (combustivel) => combustivel.valor === selectedCombustivelparaSaldo
-  );
-
-  if (!tipoCombustivel || !tipoCombustivel.key) {
-    showSnackbar("Selecione um tipo de combustível válido.", "error");
-    setLoading(false);
-    return;
-  }
-
-  setSaldoTransacao(valorConvertido);
-
-  const payload = {
-    PRE_ID: Number(dados.prefeituraId),
-    TRA_COM_ID: Number(tipoCombustivel.key),
-    TRA_VALOR: valorConvertido,
-    TRA_USU_ID: Number(userData.idUsuario),
+    return numero;
   };
 
-  if (selectedOption === "adicionarSaldo") {
-    payload.TRA_ID_CARTAO_DESTINO = Number(cartaoSelecionado.id);
-  } else if (selectedOption === "removerSaldo") {
-    payload.TRA_ID_CARTAO_ORIGEM = Number(cartaoSelecionado.id);
-  }
+  // Converter para API (remove pontos e vírgulas)
+  const converterParaAPI = (valor) => {
+    if (!valor) return 0;
 
-  try {
-    const url =
-      selectedOption === "adicionarSaldo"
-        ? `${Constants.API_BASE_URL}/api/adicionarSaldo`
-        : `${Constants.API_BASE_URL}/api/retirarSaldo`;
+    valor = valor.replace("R$ ", "");  // Remove "R$ "
+    valor = valor.replace(",", ".");  // Substitui a vírgula por ponto
+    const resultado = parseFloat(valor);
 
-    const response = await axios.post(url, payload, {
-      headers: {
-        'Authorization': `Bearer ${userData.token}`,
-        'Accept': '*/*',
-      },
-    });
+    // console.log("Valor após conversão:", resultado); // Verifique se o valor está correto
+    return isNaN(resultado) ? 0 : resultado;
+  };
 
-    if (response.data.status) {
-      showSnackbar("Sucesso: " + response.data.message, "success");
+  // Atualiza o campo de valor com a formatação correta
+  const handleChangeValor = (event) => {
+    let inputValue = event.target.value;
 
-      const updatedSaldos = saldosCombustiveis.map((saldo) => {
-        if (saldo.tipo === selectedCombustivelparaSaldo) {
-          return {
-            ...saldo,
-            valor: selectedOption === "adicionarSaldo"
-              ? saldo.valor + valorConvertido
-              : saldo.valor - valorConvertido,
-          };
-        }
-        return saldo;
+    // Remove tudo que não for número ou vírgula
+    inputValue = inputValue.replace(/[^\d,]/g, "");
+
+    // Garante que haja apenas uma vírgula
+    const indexVirgula = inputValue.indexOf(",");
+    if (indexVirgula !== -1) {
+      // Limita a 3 casas decimais após a vírgula
+      inputValue = inputValue.substring(0, indexVirgula + 4);
+    }
+
+    // Adiciona "R$ " antes do valor formatado
+    setSaldoText("R$ " + inputValue);
+  };
+
+  const adicionarRemoverSaldo = async () => {
+    setLoading(true);
+
+    // console.log("Valor digitado (saldoText):", saldoText); // Verifique o valor digitado
+
+    const valorConvertido = converterParaAPI(saldoText);
+    //  console.log("Valor convertido para API:", valorConvertido); // Verifique o valor convertido
+    // console.log("Tipo de valorConvertido:", typeof valorConvertido); // Verifique o tipo
+    //  console.log("Valor é maior que zero?", valorConvertido > 0); // Verifique se o valor é maior que zero
+
+    // Verificação adicional
+    if (isNaN(valorConvertido) || valorConvertido <= 0) {
+      alert("O valor do saldo deve ser maior que zero!");
+      setLoading(false);
+      return;
+    }
+
+    const tipoCombustivel = combustiveis.find(
+      (combustivel) => combustivel.valor === selectedCombustivelparaSaldo
+    );
+
+    if (!tipoCombustivel || !tipoCombustivel.key) {
+      showSnackbar("Selecione um tipo de combustível válido.", "error");
+      setLoading(false);
+      return;
+    }
+
+    // Atualiza o saldoTransacao com o valorConvertido
+    setSaldoTransacao(valorConvertido);
+
+    // Monta o payload
+    const payload = {
+      PRE_ID: Number(dados.prefeituraId),
+      TRA_COM_ID: Number(tipoCombustivel.key),
+      TRA_VALOR: valorConvertido,
+      TRA_USU_ID: Number(userData.idUsuario),
+    };
+
+    if (selectedOption === "adicionarSaldo") {
+      payload.TRA_ID_CARTAO_DESTINO = Number(cartaoSelecionado.id);
+    } else if (selectedOption === "removerSaldo") {
+      payload.TRA_ID_CARTAO_ORIGEM = Number(cartaoSelecionado.id);
+    }
+
+    try {
+      const url =
+        selectedOption === "adicionarSaldo"
+          ? `${Constants.API_BASE_URL}/api/adicionarSaldo`
+          : `${Constants.API_BASE_URL}/api/retirarSaldo`;
+
+      const response = await axios.post(url, payload, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': '*/*',
+        },
       });
 
-      setSaldosCombustiveis([...updatedSaldos]);
+      //  console.log("Resposta da API após transação:", response.data);
 
-      handleBuscarInfo();
-      handleCancel();
-    } else {
-      showSnackbar("Erro: " + response.data.message, "error");
+      if (response.data.status) {
+        showSnackbar("Sucesso: " + response.data.message, "success");
+
+        // Atualiza o estado local imediatamente
+        const updatedSaldos = saldosCombustiveis.map((saldo) => {
+          if (saldo.tipo === selectedCombustivelparaSaldo) {
+            return {
+              ...saldo,
+              valor: selectedOption === "adicionarSaldo"
+                ? saldo.valor + valorConvertido
+                : saldo.valor - valorConvertido,
+            };
+          }
+          return saldo;
+        });
+
+        setSaldosCombustiveis([...updatedSaldos]);
+        // console.log("Saldos após atualização:", updatedSaldos);
+
+        // Força a recarga dos dados da prefeitura selecionada
+        if (prefeituraSelecionada) {
+          await handleSelectPrefeitura(prefeituraSelecionada);
+        }
+
+        // Atualiza os saldos disponíveis
+        handleBuscarInfo();
+        handleCancel();
+      } else {
+        showSnackbar("Erro: " + response.data.message, "error");
+      }
+    } catch (error) {
+      console.error("Erro na requisição:", error.response?.data || error.message);
+      showSnackbar(
+        error.response?.data?.message || "Erro ao realizar transação. Tente novamente.",
+        "error"
+      );
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Erro na requisição:", error.response?.data || error.message);
-    showSnackbar(
-      error.response?.data?.message || "Erro ao realizar transação. Tente novamente.",
-      "error"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const editarCartao = async (bloquear, nomeResponsavelAlterado) => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     setLoading(true);
     const idCartao = Number(cartaoSelecionado?.id);
 
@@ -469,22 +635,32 @@ const adicionarRemoverSaldo = async () => {
         dadosAlterado,
         {
           headers: {
-            'Authorization': `Bearer ${userData.token}`,
-            "Accept": "*/*",
+            'Authorization': `Bearer ${token}`,
+            'Accept': '*/*',
           },
         }
       );
 
       if (response.data.status) {
-       // setSnackbarMessage("Sucesso:\n" + response.data.message);
-      //  setOpenSnackbar(true);
-        handleCancel();
-        handleBuscarInfo();
+        showSnackbar("Sucesso: " + response.data.message, "success");
+
+        // Atualiza o estado local dos cartões
+        const cartoesAtualizados = cartoes.map((cartao) => {
+          if (cartao.id === idCartao) {
+            return {
+              ...cartao,
+              status: dadosAlterado.CAR_STATUS || cartao.status, // Atualiza o status
+            };
+          }
+          return cartao;
+        });
+
+        setCartoes(cartoesAtualizados); // Atualiza o estado dos cartões
+        handleCancel(); // Limpa os campos selecionados
       }
     } catch (error) {
       console.error("Erro ao editar cartão:", error);
-     // setSnackbarMessage("Erro ao editar informações do cartão. Tente novamente.");
-     // setOpenSnackbar(true);
+      showSnackbar("Erro ao editar informações do cartão. Tente novamente.", "error");
     } finally {
       setLoading(false);
     }
@@ -508,8 +684,27 @@ const adicionarRemoverSaldo = async () => {
     return numCartao.padStart(4, "0"); // Garante 4 dígitos, preenchendo com zeros à esquerda
   };
 
+  const SelectCartoes = ({ cartaoSelecionado, cartoes, setCartaoSelecionado, title }) => {
+    return (
+      <Box>
+        <Typography variant="h6">{title}</Typography>
+        <Select
+          value={cartaoSelecionado}
+          onChange={(event) => setCartaoSelecionado(event.target.value)}
+          fullWidth
+        >
+          {cartoes.map((cartao) => (
+            <MenuItem key={cartao.id} value={cartao}>
+              {cartao.label} - Nº {cartao.num_cartao}
+            </MenuItem>
+          ))}
+        </Select>
+      </Box>
+    );
+  };
+
   return (
-    <MainLayout titlePage="Gestão dos Cartões e Saldos" loading={loading}>
+    <MainLayout titlePage={title} loading={loading}>
       <Box
         sx={{
           backgroundImage: `url(${backgroundImage})`,
@@ -520,20 +715,67 @@ const adicionarRemoverSaldo = async () => {
           boxShadow: 3,
         }}
       >
-        <Typography variant="h4" align="center" gutterBottom>
-          Gestão dos Cartões e Saldos
+        <Typography variant="h4" align="center">
+          Gestão dos cartões e Saldos
         </Typography>
+        <div>
 
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={3000}
-          onClose={handleSnackbarClose}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        >
-          <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
+
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000}
+            onClose={handleSnackbarClose}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          >
+            <Alert
+              onClose={handleSnackbarClose}
+              severity={snackbarSeverity}
+              sx={{ width: "100%" }}
+            >
+              {snackbarMessage}
+            </Alert>
+          </Snackbar>
+        </div>
+
+        {/* Seleção da Prefeitura */}
+        {/* Seleção da Prefeitura */}
+        <Container maxWidth="md" sx={{ padding: "1% 1%" }}>
+          <Paper elevation={3} sx={{ padding: 2, borderRadius: 2 }}>
+            <Box>
+              <Typography variant="h6">Selecione uma Prefeitura:</Typography>
+              <Autocomplete
+                options={filteredPrefeituras}
+                getOptionLabel={(option) => option.PRE_NOME}
+                value={prefeituras.find((prefeitura) => prefeitura.PRE_ID === prefeituraSelecionada) || null}
+                onChange={(_, newValue) => {
+                  if (newValue) {
+                    handleSelectPrefeitura(newValue.PRE_ID);
+                  } else {
+                    // 🔹 Se a pesquisa for limpa, reseta os estados:
+                    setPrefeituraSelecionada(null);
+                    setDados(null);
+                    setCartoes([]); // Remove os cartões carregados
+                    setSaldosCombustiveis([]); // Limpa os saldos
+                    setCartaoSelecionado(null); // Limpa o cartão selecionado
+                    setModalOpen(false); // 🔹 Fecha o modal
+                  }
+                }}
+                onInputChange={(_, newInputValue) => {
+                  setSearchPrefeitura(newInputValue);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Prefeitura"
+                    fullWidth
+                    margin="normal"
+                  />
+                )}
+              />
+
+            </Box>
+          </Paper>
+        </Container>
 
         <Container maxWidth="md" sx={{ padding: "1% 1%" }}>
           <Box sx={{ p: 4, justifyContent: "center", padding: 0 }}>
@@ -546,8 +788,8 @@ const adicionarRemoverSaldo = async () => {
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
-                  gap: 2,
+                  gridTemplateColumns: "repeat(4, 1fr)", // 4 colunas
+                  gap: 2, // Espaço entre os itens
                   justifyContent: "center",
                   alignItems: "center",
                   textAlign: "center",
@@ -590,28 +832,31 @@ const adicionarRemoverSaldo = async () => {
         </Container>
 
         <Container maxWidth="md" sx={{ padding: "3% 1%" }}>
-          <Box
+          <Box //Container:  Gerenciamento da prefeitura
             sx={{
               p: 4,
               bgcolor: "background.paper",
               borderRadius: 2,
               boxShadow: 3,
               padding: isMobile ? 1 : 3,
+              //backgroundColor: "#FFFFFF00", // Deixar fundo transparente.
               backgroundColor: "#f0f0f7",
             }}
           >
-            <Box
+            <Box //Box header: Selecionando Cartão
               sx={{
                 display: "flex",
-                flexDirection: isMobile ? "column" : "row",
+                flexDirection: "row",
                 justifyContent: isMobile ? "flex-end" : "space-between",
                 flexWrap: "wrap",
                 alignItems: "start",
-                gap: 2,
               }}
             >
               <Box sx={{ width: isMobile ? "100%" : "none" }}>
-                <Typography variant="h6">Selecione um cartão para gerenciar</Typography>
+                {/*Box Label+Select */}
+                <Typography variant="h6">
+                  Selecione um cartão para gerenciar
+                </Typography>
                 <SelectCartoes
                   cartaoSelecionado={cartaoSelecionado}
                   cartoes={cartoes}
@@ -619,8 +864,8 @@ const adicionarRemoverSaldo = async () => {
                   title="Cartões"
                 />
               </Box>
-              {cartaoSelecionado && (
-                <Box
+              {cartaoSelecionado ? (
+                <Box // ====== Informções sobre o cartão selecionado ======
                   sx={{
                     flex: isMobile ? 1 : 0.8,
                     backgroundColor: "#f5f5f5",
@@ -629,7 +874,12 @@ const adicionarRemoverSaldo = async () => {
                     boxShadow: "1px 1px 5px rgba(0, 0, 0, 0.1)",
                   }}
                 >
-                  <Typography variant="body1" align="center" fontWeight="bold" color="primary">
+                  <Typography
+                    variant="body1"
+                    align="center"
+                    fontWeight="bold"
+                    color="primary"
+                  >
                     Cartão Selecionado: Nº {cartaoSelecionado?.num_cartao}
                   </Typography>
                   <Box
@@ -638,31 +888,37 @@ const adicionarRemoverSaldo = async () => {
                       flexDirection: "row",
                       justifyContent: "space-between",
                       alignItems: "center",
+                      //marginTop: 1,
+                      //gap: 1,
                     }}
                   >
                     <Typography variant="body2">
                       <strong>Setor:</strong> {cartaoSelecionado?.label} <br />
-                      <strong>Responsável:</strong> {cartaoSelecionado?.nomeResponsavel} <br />
-                      <strong>Status:</strong> {cartaoSelecionado?.status === "ATIVO" ? "Ativo" : "Bloqueado"}
+                      <strong>Responsável:</strong> {cartaoSelecionado?.nomeResponsavel} {/* responsavel */} <br />
+                      <strong>Status:</strong>
+                      {/* {statusCartao ? "Ativo" : "Bloqueado"} */}
+                      {cartaoSelecionado?.status === "ATIVO" ? "Ativo" : "Bloqueado"}
                     </Typography>
                   </Box>
                 </Box>
+              ) : (
+                <></>
               )}
             </Box>
-
-            <ModalGerarEditarCard
+            <ModalGerarEditarCard  // ====== Modal Editar resposavel pelo cartão ======
               open={isModalOpen}
               onClose={handleCloseModalGerarEditarCard}
-              mode={modalMode}
-              cardNumber={modalMode === "editar" ? cartaoSelecionado?.num_cartao : ""}
+              mode={modalMode} //"gerar" // ou "editar"
+              cardNumber={
+                modalMode === "editar" ? cartaoSelecionado?.num_cartao : ""
+              }
               initialData={cardData}
               onSubmit={handleSubmeterAlteracaoDeResponsavel}
             />
-
-            {cartaoSelecionado && (
+            {cartaoSelecionado ? (
               <Box>
                 <Box>
-                  <IconButton
+                  <IconButton // ====== Editar resposavel pelo cartão ======
                     type="button"
                     aria-label="Criar cartão"
                     size="small"
@@ -702,7 +958,7 @@ const adicionarRemoverSaldo = async () => {
                     label={cartaoSelecionado?.status === "ATIVO" ? "Bloquear cartão" : "Desbloquear cartão"}
                   />
                 </Box>
-                <ModalConfirmacao
+                <ModalConfirmacao // ====== Modal Bloquear/Desbloquear cartão ======
                   open={isModalConfirmacaoOpen}
                   onClose={handleCloseModalConfirmacao}
                   title="Confirmar Ação"
@@ -713,7 +969,7 @@ const adicionarRemoverSaldo = async () => {
                   }
                   onConfirm={handleModalConfirmacao}
                 />
-                <Box
+                <Box // ====== Saldos do cartão | Adicionar/Remover saldos ======
                   sx={{
                     margin: "10px 0",
                     padding: "5px",
@@ -724,7 +980,13 @@ const adicionarRemoverSaldo = async () => {
                   <Typography variant="h6" align="center" fontWeight="bold">
                     Saldos do Cartão
                   </Typography>
-                  <Divider sx={{ my: 2, borderRadius: "10px", borderBottomWidth: "medium" }} />
+                  <Divider
+                    sx={{
+                      my: 2,
+                      borderRadius: "10px",
+                      borderBottomWidth: "medium",
+                    }}
+                  />
                   <Box sx={{ p: 2 }}>
                     <Stack
                       direction="row"
@@ -736,7 +998,7 @@ const adicionarRemoverSaldo = async () => {
                         <Box
                           key={index}
                           sx={{
-                            width: { xs: "100%", sm: "48%", md: "30%" },
+                            width: { xs: "100%", sm: "48%", md: "30%" }, // 3 por linha no desktop
                             height: "40px",
                             px: 2,
                             py: 1,
@@ -750,21 +1012,33 @@ const adicionarRemoverSaldo = async () => {
                             boxShadow: "1px 1px 5px rgba(0, 0, 0, 0.1)",
                           }}
                         >
-                          <Typography variant="body2" fontWeight="bold" color="primary">
+                          <Typography
+                            variant="body2"
+                            fontWeight="bold"
+                            color="primary"
+                          >
                             {combustivel.tipo}
                           </Typography>
-                          <Typography variant="body2">{combustivel.valor}</Typography>
+                          <Typography variant="body2">
+                            {combustivel.valor}
+                          </Typography>
                         </Box>
                       ))}
                     </Stack>
                   </Box>
-                  <Divider sx={{ my: 2, borderRadius: "10px", borderBottomWidth: "medium" }} />
+                  <Divider
+                    sx={{
+                      my: 2,
+                      borderRadius: "10px",
+                      borderBottomWidth: "medium",
+                    }}
+                  />
                   <Typography variant="h6" align="center" fontWeight="bold">
                     Operações com o Cartão
                   </Typography>
                   <Box sx={{ display: "flex", justifyContent: "center" }}>
                     <RadioGroup
-                      row={!isMobile}
+                      row={isMobile ? false : true}
                       name="row-radio-buttons-group"
                       value={selectedOption}
                       onChange={handleOptionChange}
@@ -774,6 +1048,11 @@ const adicionarRemoverSaldo = async () => {
                         control={<Radio />}
                         label="Adicionar saldo"
                       />
+                      {/* <FormControlLabel
+                        value="transferirSaldo"
+                        control={<Radio />}
+                        label="Transferir Saldo"
+                      /> */}
                       <FormControlLabel
                         value="removerSaldo"
                         control={<Radio />}
@@ -792,21 +1071,50 @@ const adicionarRemoverSaldo = async () => {
                           sx={{ width: 320 }}
                           margin="normal"
                         />
-                        <Typography variant="subtitle1">Selecione o Combustível:</Typography>
+                        <Typography variant="subtitle1">
+                          Selecione o Combustível:
+                        </Typography>
                         <Select
                           value={selectedCombustivelparaSaldo}
                           onChange={handleChangeSelectCombustivel}
-                          sx={{ width: isMobile ? "100%" : 320 }}
+                          //label="Selecione o Combustível"
+                          sx={{
+                            width: isMobile ? "100%" : 320,
+                          }}
                         >
                           {combustiveis.map((item) => (
                             <MenuItem key={item.key} value={item.valor}>
                               {item.valor}
+
                             </MenuItem>
                           ))}
                         </Select>
                       </Box>
                     </Box>
                   )}
+
+                  {selectedOption === "transferirSaldo" && (
+                    <Box sx={{ width: isMobile ? "100%" : "none" }}>
+                      <TextField
+                        label="Saldo R$"
+                        value={saldoText}
+                        onChange={handleChangeValor}
+                        variant="outlined"
+                        sx={{ width: isMobile ? "100%" : 320 }}
+                        margin="normal"
+                      />
+                      <Typography variant="subtitle1">
+                        Para o cartão:
+                      </Typography>
+                      <SelectCartoes
+                        cartaoSelecionado={cartaoDestino}
+                        cartoes={cartoes}
+                        setCartaoSelecionado={setarCartaoDestino}
+                        title="Cartão destinatário"
+                      />
+                    </Box>
+                  )}
+
                   {selectedOption === "removerSaldo" && (
                     <Box sx={{ display: "flex", justifyContent: "center" }}>
                       <Box sx={{ display: "block" }}>
@@ -818,11 +1126,16 @@ const adicionarRemoverSaldo = async () => {
                           sx={{ width: 320 }}
                           margin="normal"
                         />
-                        <Typography variant="subtitle1">Selecione o Combustível:</Typography>
+                        <Typography variant="subtitle1">
+                          Selecione o Combustível:
+                        </Typography>
                         <Select
                           value={selectedCombustivelparaSaldo}
                           onChange={handleChangeSelectCombustivel}
-                          sx={{ width: isMobile ? "100%" : 320 }}
+                          //label="Selecione o Combustível"
+                          sx={{
+                            width: isMobile ? "100%" : 320,
+                          }}
                         >
                           {combustiveis.map((item) => (
                             <MenuItem key={item.key} value={item.valor}>
@@ -833,28 +1146,38 @@ const adicionarRemoverSaldo = async () => {
                       </Box>
                     </Box>
                   )}
-                  <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
+                  <Box //Box Botões de controle: Salvar e Cancelar
+                    sx={{
+                      mt: 3,
+                      display: "flex",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <Button
                       type="button"
                       variant="outlined"
                       color="secondary"
                       onClick={handleCancel}
-                      sx={{ width: isMobile ? "48%" : "auto" }}
                     >
                       Cancelar
                     </Button>
                     <Button
+                      //type="submit"
                       variant="contained"
                       color="primary"
                       disabled={desabilitarSalvar}
+
                       onClick={adicionarRemoverSaldo}
-                      sx={{ width: isMobile ? "48%" : "auto" }}
+
                     >
                       {labelBotaoSalvar}
                     </Button>
+
                   </Box>
                 </Box>
               </Box>
+            ) : (
+              <></>
             )}
           </Box>
         </Container>

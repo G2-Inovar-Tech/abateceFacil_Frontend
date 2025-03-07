@@ -14,19 +14,15 @@ import {
 import MainLayout from "../components/MainLayout.js";
 import backgroundImage from "../assets/backgroundHome.png";
 
-export default function VincularUsuarioPrefeitura() {
-  const [formData, setFormData] = useState({
-    usuario: "",
-    prefeitura: "",
-  });
-
+export default function VincularUsuarioPosto() {
+  const [formData, setFormData] = useState({ usuario: "", posto: "" });
   const [errors, setErrors] = useState({});
   const [usuarios, setUsuarios] = useState([]);
   const [filteredUsuarios, setFilteredUsuarios] = useState([]);
-  const [prefeituras, setPrefeituras] = useState([]);
-  const [filteredPrefeituras, setFilteredPrefeituras] = useState([]);
+  const [postos, setPostos] = useState([]);
+  const [filteredPostos, setFilteredPostos] = useState([]);
   const [searchUsuario, setSearchUsuario] = useState("");
-  const [searchPrefeitura, setSearchPrefeitura] = useState("");
+  const [searchPosto, setSearchPosto] = useState("");
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -44,7 +40,6 @@ export default function VincularUsuarioPrefeitura() {
           }
         });
         const data = await response.json();
-       // console.log("Dados da API (usuários):", data); // Depuração
         if (response.ok && data.users) {
           setUsuarios(data.users);
           setFilteredUsuarios(data.users);
@@ -75,22 +70,21 @@ export default function VincularUsuarioPrefeitura() {
     }
   }, [searchUsuario, usuarios]);
 
-  // Carrega as prefeituras da API
+  // Carrega os postos da API
   useEffect(() => {
-    const fetchPrefeituras = async () => {
+    const fetchPostos = async () => {
       try {
-        const response = await fetch(Constants.API_CONSULTAR_PREFEITURA, {
+        const response = await fetch(Constants.API_CONSULTAR_POSTO, {
           headers: {
             "Authorization": `Bearer ${token}` // Adiciona o token no cabeçalho
           }
         });
         const data = await response.json();
-       // console.log("Dados da API (prefeituras):", data); // Depuração
-        if (response.ok && data.prefeituras) {
-          setPrefeituras(data.prefeituras);
-          setFilteredPrefeituras(data.prefeituras);
+        if (response.ok && data.postos) {
+          setPostos(data.postos);
+          setFilteredPostos(data.postos);
         } else {
-          setSnackbarMessage("Erro ao buscar prefeituras.");
+          setSnackbarMessage("Erro ao buscar postos.");
           setSnackbarSeverity("error");
           setSnackbarOpen(true);
         }
@@ -101,35 +95,35 @@ export default function VincularUsuarioPrefeitura() {
         setSnackbarOpen(true);
       }
     };
-    fetchPrefeituras();
+    fetchPostos();
   }, [token]);
 
-  // Filtra as prefeituras com base na pesquisa
+  // Filtra os postos com base na pesquisa
   useEffect(() => {
-    if (searchPrefeitura) {
-      const filtered = prefeituras.filter((prefeitura) =>
-        prefeitura.PRE_NOME.toLowerCase().includes(searchPrefeitura.toLowerCase())
+    if (searchPosto) {
+      const filtered = postos.filter((posto) =>
+        posto.POS_RAZAO_SOCIAL &&
+        searchPosto &&
+        posto.POS_RAZAO_SOCIAL.toLowerCase().includes(searchPosto.toLowerCase())
       );
-      setFilteredPrefeituras(filtered);
+      setFilteredPostos(filtered);
     } else {
-      setFilteredPrefeituras(prefeituras);
+      setFilteredPostos(postos);
     }
-  }, [searchPrefeitura, prefeituras]);
+  }, [searchPosto, postos]);
 
   // Valida o formulário
   const validateForm = () => {
     const newErrors = {};
     if (!formData.usuario) newErrors.usuario = "Usuário é obrigatório.";
-    if (!formData.prefeitura) newErrors.prefeitura = "Prefeitura é obrigatória.";
+    if (!formData.posto) newErrors.posto = "Posto é obrigatório.";
 
-    // Verifica se o usuário selecionado existe na lista
     if (formData.usuario && !usuarios.some((user) => user.USU_ID === formData.usuario)) {
       newErrors.usuario = "Usuário inválido.";
     }
 
-    // Verifica se a prefeitura selecionada existe na lista
-    if (formData.prefeitura && !prefeituras.some((pref) => pref.PRE_ID === formData.prefeitura)) {
-      newErrors.prefeitura = "Prefeitura inválida.";
+    if (formData.posto && !postos.some((posto) => posto.POS_ID === formData.posto)) {
+      newErrors.posto = "Posto inválido.";
     }
 
     setErrors(newErrors);
@@ -139,33 +133,37 @@ export default function VincularUsuarioPrefeitura() {
   // Envia os dados do formulário para a API
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
     if (validateForm()) {
+      if (!formData.usuario) {
+        setSnackbarMessage("Erro: O usuário não foi selecionado corretamente.");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+        return;
+      }
+  
       const requestData = {
-        PRU_USU_ID: formData.usuario,
-        PRU_PRE_ID: formData.prefeitura,
+        POS_USU_ID: formData.usuario,
+        POS_USU_POS_ID: formData.posto,
       };
-
-      //console.log("Dados enviados para a API:", JSON.stringify(requestData, null, 2));
-
+  
       try {
-        const response = await fetch(Constants.API_VINCULAR_USUARIO_PREFEITURA, {
+        const response = await fetch(Constants.API_VINCULAR_USUARIO_POSTO, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Accept": "*/*",
             "Authorization": `Bearer ${token}` // Adiciona o token no cabeçalho
           },
           body: JSON.stringify(requestData),
         });
-
+  
         const responseData = await response.json();
-       // console.log("Resposta da API (vincularPrefeitura):", responseData); // Depuração
-
+  
         if (response.ok) {
           setSnackbarMessage(responseData.message || "Usuário vinculado com sucesso!");
           setSnackbarSeverity("success");
           setSnackbarOpen(true);
-          handleCancel(); // Limpa o formulário após o sucesso
+          handleCancel();
         } else {
           const errorMessages = responseData.erros
             ? Object.values(responseData.erros).flat().join(", ")
@@ -175,7 +173,7 @@ export default function VincularUsuarioPrefeitura() {
           setSnackbarOpen(true);
         }
       } catch (error) {
-        console.error("Erro ao enviar dados:", error);
+        console.error("Erro ao enviar requisição:", error);
         setSnackbarMessage("Erro ao conectar com o servidor.");
         setSnackbarSeverity("error");
         setSnackbarOpen(true);
@@ -185,10 +183,10 @@ export default function VincularUsuarioPrefeitura() {
 
   // Limpa o formulário
   const handleCancel = () => {
-    setFormData({ usuario: "", prefeitura: "" });
+    setFormData({ usuario: "", posto: "" });
     setErrors({});
     setSearchUsuario("");
-    setSearchPrefeitura("");
+    setSearchPosto("");
   };
 
   // Fecha o Snackbar
@@ -214,7 +212,7 @@ export default function VincularUsuarioPrefeitura() {
         <Container maxWidth="md">
           <Box sx={{ p: 4, bgcolor: "background.paper", borderRadius: 2, boxShadow: 3 }}>
             <Typography variant="h4" align="center" gutterBottom>
-              Vincular Usuário à Prefeitura
+              Vincular Usuário ao Posto
             </Typography>
             <form onSubmit={handleSubmit}>
               <Grid container spacing={3}>
@@ -226,9 +224,7 @@ export default function VincularUsuarioPrefeitura() {
                     onChange={(_, newValue) => {
                       setFormData((prev) => ({ ...prev, usuario: newValue ? newValue.USU_ID : "" }));
                     }}
-                    onInputChange={(_, newInputValue) => {
-                      setSearchUsuario(newInputValue);
-                    }}
+                    onInputChange={(_, newInputValue) => setSearchUsuario(newInputValue)}
                     renderInput={(params) => (
                       <TextField
                         {...params}
@@ -244,23 +240,21 @@ export default function VincularUsuarioPrefeitura() {
                 </Grid>
                 <Grid item xs={12}>
                   <Autocomplete
-                    options={filteredPrefeituras}
-                    getOptionLabel={(option) => option.PRE_NOME || ""}
-                    value={prefeituras.find((pref) => pref.PRE_ID === formData.prefeitura) || null}
+                    options={filteredPostos}
+                    getOptionLabel={(option) => option.POS_RAZAO_SOCIAL || ""}
+                    value={postos.find((posto) => posto.POS_ID === formData.posto) || null}
                     onChange={(_, newValue) => {
-                      setFormData((prev) => ({ ...prev, prefeitura: newValue ? newValue.PRE_ID : "" }));
+                      setFormData((prev) => ({ ...prev, posto: newValue ? newValue.POS_ID : "" }));
                     }}
-                    onInputChange={(_, newInputValue) => {
-                      setSearchPrefeitura(newInputValue);
-                    }}
+                    onInputChange={(_, newInputValue) => setSearchPosto(newInputValue)}
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Prefeitura"
+                        label="Posto"
                         fullWidth
                         margin="normal"
-                        error={!!errors.prefeitura}
-                        helperText={errors.prefeitura}
+                        error={!!errors.posto}
+                        helperText={errors.posto}
                         sx={{ "& .MuiInputBase-root": { height: "56px" } }}
                       />
                     )}

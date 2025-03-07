@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom"; // Importa Link para navegação
+import { Link } from "react-router-dom";
 import {
   Box,
   Drawer,
@@ -29,35 +29,40 @@ import {
   ExpandMore,
   ExpandLess,
   DirectionsCar,
-  AppRegistration, // Importando o ícone correto
-  Link as LinkIcon, // Ícone para Vincular
-  Description as ContratosIcon, // Ícone para Contratos
+  AppRegistration,
+  Link as LinkIcon,
+  Description as ContratosIcon,
+  AddLocation,
+  CorporateFare,
+  Dashboard,
+  Assessment,
+  BarChart,
 } from "@mui/icons-material";
 import iconeAbasteceFacil from "../assets/iconeAplicativoPrefeitura.png";
 
 const drawerWidth = 240;
 
 export default function SideMenu({ open, handleDrawerToggle }) {
-  const { userProfile } = useAuth(); // Obtém o perfil do usuário autenticado
-  const isMobile = useMediaQuery("(max-width:600px)"); // Detecta telas pequenas
-  const [openCadastrarMenu, setOpenCadastrarMenu] = useState(false); // Estado para controlar o menu Cadastrar
-  const [openVincularMenu, setOpenVincularMenu] = useState(false); // Estado para controlar o menu Vincular
-  const [openContratosMenu, setOpenContratosMenu] = useState(false); // Estado para controlar o menu Contratos
+  const { userProfile } = useAuth();
+  const isMobile = useMediaQuery("(max-width:600px)");
+  const [openCadastrarMenu, setOpenCadastrarMenu] = useState(false);
+  const [openVincularMenu, setOpenVincularMenu] = useState(false);
+  const [openContratosMenu, setOpenContratosMenu] = useState(false);
+  const [openRelatoriosMenu, setOpenRelatoriosMenu] = useState(false);
 
   // Itens do menu para Administrador
   const adminMenuItems = [
-    { text: "Home", path: "/home", icon: <HomeIcon /> },
-    {
+    //{ text: "Home", path: "/home", icon: <HomeIcon /> }, // 1ª posição
+   /* {
       text: "Gerenciar Prefeituras",
       path: "/gerenciar-prefeituras",
       icon: <PrefeiturasIcon />,
-    },
-    { text: "Relatórios", path: "/relatorios", icon: <RelatoriosIcon /> },
+    },// 2ª posição*/
     {
-      text: "Configurações",
-      path: "/configuracoes",
-      icon: <ConfiguracoesIcon />,
-    },
+      text: "Gerenciar Saldos e Cartões", 
+      path: "/gestao-saldos-cartoes-adm", 
+      icon: <Dashboard />, 
+    }, // 3ª posição
   ];
 
   // Itens do menu para Prefeitura
@@ -68,6 +73,12 @@ export default function SideMenu({ open, handleDrawerToggle }) {
       path: "/gestao-saldos-cartoes",
       icon: <PrefeiturasIcon />,
     },
+    {
+      text: "Cadastrar Veículo",
+      path: "/cadastro-veiculo-pre",  
+      icon: <DirectionsCar />,
+    },
+
     {
       text: "Historico",
       path: "/historico-prefeitura",
@@ -85,6 +96,8 @@ export default function SideMenu({ open, handleDrawerToggle }) {
     { text: "Cadastrar Cartão", path: "/cadastro-cartao", icon: <AddCard /> },
     { text: "Cadastar Usuário", path: "/cadastro-usuario", icon: <CadastrarUsuariosIcon /> },
     { text: "Cadastrar Veículo", path: "/cadastro-veiculo", icon: <DirectionsCar /> },
+    { text: "Cadastrar Endereço", path: "/cadastro-endereco", icon: <AddLocation />},
+    { text: "Cadastrar Órgão", path: "/cadastro-orgao", icon: <CorporateFare/>},
   ];
 
   // Itens de Vincular
@@ -96,13 +109,20 @@ export default function SideMenu({ open, handleDrawerToggle }) {
 
   // Itens de Contratos
   const contratosItems = [
-    { text: "Contrato Prefeitura", path: "/contrato-prefeitura", icon: <ContratosIcon /> },
- 
+    { text: "Cadastrar Contrato ", path: "/contrato-prefeitura", icon: <ContratosIcon /> },
   ];
 
-  const toggleCadastrarMenu = () => setOpenCadastrarMenu(!openCadastrarMenu); // Função para alternar o menu "Cadastrar"
-  const toggleVincularMenu = () => setOpenVincularMenu(!openVincularMenu); // Função para alternar o menu "Vincular"
-  const toggleContratosMenu = () => setOpenContratosMenu(!openContratosMenu); // Função para alternar o menu "Contratos"
+    // Itens de Relatórios
+    const relatoriosItems = [
+      { text: "Relatório Geral", path: "/relatorio-geral", icon: <Assessment/> },
+      { text: "Relatório Detalhado", path: "/relatorio-Detalhado", icon: <Assessment/> },
+      { text: "Relatório Posto", path: "/relatorio-Posto", icon: <Assessment/> },
+    ];
+
+  const toggleCadastrarMenu = () => setOpenCadastrarMenu(!openCadastrarMenu);
+  const toggleVincularMenu = () => setOpenVincularMenu(!openVincularMenu);
+  const toggleContratosMenu = () => setOpenContratosMenu(!openContratosMenu);
+  const toggleRelatorioMenu = () => setOpenRelatoriosMenu(!openRelatoriosMenu);
 
   return (
     <>
@@ -157,15 +177,15 @@ export default function SideMenu({ open, handleDrawerToggle }) {
                 </ListItem>
 
                 {/* Renderiza o menu "Cadastrar" logo após "Gerenciar Prefeituras" */}
-                {userProfile === "ADM" && text === "Gerenciar Prefeituras" && (
+                {userProfile === "ADM" && text ==="Gerenciar Saldos e Cartões" && (
                   <>
                     <ListItemButton onClick={toggleCadastrarMenu}>
                       <ListItemIcon sx={{ minWidth: "35px" }}>
-                        <AppRegistration /> {/* Ícone para Cadastrar */}
+                        <AppRegistration />
                       </ListItemIcon>
                       <ListItemText
                         primary="Cadastrar"
-                        sx={{ fontSize: "0.875rem" }} // Diminuir o tamanho da fonte
+                        sx={{ fontSize: "0.875rem" }}
                       />
                       {openCadastrarMenu ? <ExpandLess /> : <ExpandMore />}
                     </ListItemButton>
@@ -179,7 +199,7 @@ export default function SideMenu({ open, handleDrawerToggle }) {
                               </ListItemIcon>
                               <ListItemText
                                 primary={text}
-                                sx={{ fontSize: "0.875rem" }} // Diminuir o tamanho da fonte
+                                sx={{ fontSize: "0.875rem" }}
                               />
                             </ListItemButton>
                           </ListItem>
@@ -190,11 +210,11 @@ export default function SideMenu({ open, handleDrawerToggle }) {
                     {/* Menu "Vincular" */}
                     <ListItemButton onClick={toggleVincularMenu}>
                       <ListItemIcon sx={{ minWidth: "35px" }}>
-                        <LinkIcon /> {/* Ícone para Vincular */}
+                        <LinkIcon />
                       </ListItemIcon>
                       <ListItemText
                         primary="Vincular"
-                        sx={{ fontSize: "0.875rem" }} // Diminuir o tamanho da fonte
+                        sx={{ fontSize: "0.875rem" }}
                       />
                       {openVincularMenu ? <ExpandLess /> : <ExpandMore />}
                     </ListItemButton>
@@ -208,7 +228,7 @@ export default function SideMenu({ open, handleDrawerToggle }) {
                               </ListItemIcon>
                               <ListItemText
                                 primary={text}
-                                sx={{ fontSize: "0.875rem" }} // Diminuir o tamanho da fonte
+                                sx={{ fontSize: "0.875rem" }}
                               />
                             </ListItemButton>
                           </ListItem>
@@ -219,11 +239,11 @@ export default function SideMenu({ open, handleDrawerToggle }) {
                     {/* Menu "Contratos" */}
                     <ListItemButton onClick={toggleContratosMenu}>
                       <ListItemIcon sx={{ minWidth: "35px" }}>
-                        <ContratosIcon /> {/* Ícone para Contratos */}
+                        <ContratosIcon />
                       </ListItemIcon>
                       <ListItemText
                         primary="Contratos"
-                        sx={{ fontSize: "0.875rem" }} // Diminuir o tamanho da fonte
+                        sx={{ fontSize: "0.875rem" }}
                       />
                       {openContratosMenu ? <ExpandLess /> : <ExpandMore />}
                     </ListItemButton>
@@ -237,13 +257,44 @@ export default function SideMenu({ open, handleDrawerToggle }) {
                               </ListItemIcon>
                               <ListItemText
                                 primary={text}
-                                sx={{ fontSize: "0.875rem" }} // Diminuir o tamanho da fonte
+                                sx={{ fontSize: "0.875rem" }}
                               />
                             </ListItemButton>
                           </ListItem>
                         ))}
                       </List>
                     </Collapse>
+
+
+                      {/* Menu "Relatórios" */}
+                      <ListItemButton onClick={toggleRelatorioMenu}>
+                      <BarChart sx={{ minWidth: "35px" }}>
+                        <LinkIcon />
+                      </BarChart>
+                      <ListItemText
+                        primary="Relatórios"
+                        sx={{ fontSize: "0.875rem" }}
+                      />
+                      {openRelatoriosMenu ? <ExpandLess /> : <ExpandMore />}
+                    </ListItemButton>
+                    <Collapse in={openRelatoriosMenu} timeout="auto" unmountOnExit>
+                      <List component="div" disablePadding>
+                        {relatoriosItems.map(({ text, path, icon }) => (
+                          <ListItem key={text} sx={{ paddingLeft: 4 }}>
+                            <ListItemButton component={Link} to={path}>
+                              <ListItemIcon sx={{ minWidth: "35px" }}>
+                                {icon}
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={text}
+                                sx={{ fontSize: "0.875rem" }}
+                              />
+                            </ListItemButton>
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Collapse>
+
                   </>
                 )}
               </React.Fragment>

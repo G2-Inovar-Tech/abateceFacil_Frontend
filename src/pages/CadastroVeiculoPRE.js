@@ -8,14 +8,13 @@ import {
   Typography,
   MenuItem,
   Grid,
-  Autocomplete,
   Snackbar,
   Alert,
 } from "@mui/material";
 import MainLayout from "../components/MainLayout.js";
 import backgroundImage from "../assets/backgroundHome.png";
 
-export default function CadastroVeiculo() {
+export default function CadastroVeiculoPRE() {
   const [formData, setFormData] = useState({
     tipo: "CARRO",
     placa: "",
@@ -23,83 +22,46 @@ export default function CadastroVeiculo() {
     chassi: "",
     descricao: "",
     capacidadeTanque: "",
-    prefeitura: "",
   });
 
   const [errors, setErrors] = useState({});
-  const [prefeituras, setPrefeituras] = useState([]);
-  const [filteredPrefeituras, setFilteredPrefeituras] = useState([]);
-  const [searchPrefeitura, setSearchPrefeitura] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
-  useEffect(() => {
-    const fetchPrefeituras = async () => {
-      try {
-        const response = await fetch(Constants.API_CONSULTAR_PREFEITURA, {
-          headers: {
-            "Authorization": `Bearer ${token}` // Adiciona o token no cabeçalho
-          }
-        });
-        const data = await response.json();
-        if (response.ok) {
-          setPrefeituras(data.prefeituras);
-          setFilteredPrefeituras(data.prefeituras);
-        } else {
-          showSnackbar("Erro ao buscar prefeituras.", "error");
-        }
-      } catch (error) {
-        console.error("Erro ao conectar com o servidor:", error);
-        showSnackbar("Erro ao conectar com o servidor.", "error");
-      }
-    };
-    fetchPrefeituras();
-  }, [token]);
-
-  useEffect(() => {
-    if (searchPrefeitura) {
-      const filtered = prefeituras.filter((prefeitura) =>
-        prefeitura.PRE_NOME.toLowerCase().includes(searchPrefeitura.toLowerCase())
-      );
-      setFilteredPrefeituras(filtered);
-    } else {
-      setFilteredPrefeituras(prefeituras);
-    }
-  }, [searchPrefeitura, prefeituras]);
+  // Obtém o ID da prefeitura do usuário logado
+  const prefeituraId = obterPrefeituraIdDoUsuario(); // Implemente essa função conforme sua lógica
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     let newValue = value;
-  
+
     if (name === "placa" || name === "chassi") {
       newValue = value.toUpperCase(); // Garantir que os valores de placa e chassi sejam sempre maiúsculos
     }
-  
+
     if (name === "capacidadeTanque") {
       // Remove tudo que não é número
       newValue = newValue.replace(/\D/g, "");
-  
+
       // Impede valores negativos
       if (newValue.startsWith("-")) newValue = newValue.slice(1);
-  
-       // Se houver mais de três dígitos, separa os últimos três como decimais
-       if (newValue.length > 3) {
+
+      // Se houver mais de três dígitos, separa os últimos três como decimais
+      if (newValue.length > 3) {
         const integerPart = newValue.slice(0, -3).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         const decimalPart = newValue.slice(-3);
         newValue = `${integerPart},${decimalPart}`;
+      }
     }
-}
 
-  
     setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.prefeitura) newErrors.prefeitura = "Prefeitura é obrigatória.";
-    //if (!formData.placa.trim()) newErrors.placa = "Placa é obrigatória.";
+    if (!formData.placa.trim()) newErrors.placa = "Placa é obrigatória.";
     if (!formData.renavam.trim()) newErrors.renavam = "Renavam é obrigatório.";
     if (!formData.chassi.trim()) newErrors.chassi = "Chassi é obrigatório.";
     if (!formData.capacidadeTanque.trim()) newErrors.capacidadeTanque = "Capacidade do tanque é obrigatória.";
@@ -123,7 +85,7 @@ export default function CadastroVeiculo() {
         VEI_DESCRICAO: formData.descricao,
         VEI_CAPACIDADE_TANQUE: parseFloat(formData.capacidadeTanque.replace(".", "").replace(",", ".")),
         VEI_STATUS: "ATIVO",
-        VEI_PRE_ID: formData.prefeitura,
+        VEI_PRE_ID: prefeituraId, 
       };
 
       try {
@@ -132,7 +94,7 @@ export default function CadastroVeiculo() {
           headers: {
             "Content-Type": "application/json",
             "Accept": "*/*",
-            "Authorization": `Bearer ${token}` // Adiciona o token no cabeçalho
+            "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify(requestData),
         });
@@ -149,7 +111,7 @@ export default function CadastroVeiculo() {
           showSnackbar(`Erro ao cadastrar veículo: ${errorMessages}`, "error");
         }
       } catch (error) {
-        console.error("Erro ao enviar dados:", error);
+       //console.error("Erro ao enviar dados:", error);
         showSnackbar("Erro ao conectar com o servidor.", "error");
       }
     }
@@ -163,7 +125,6 @@ export default function CadastroVeiculo() {
       chassi: "",
       descricao: "",
       capacidadeTanque: "",
-      prefeitura: "",
     });
     setErrors({});
   };
@@ -200,33 +161,6 @@ export default function CadastroVeiculo() {
             </Typography>
             <form onSubmit={handleSubmit}>
               <Grid container spacing={3}>
-                {/* Prefeitura */}
-                <Grid item xs={12}>
-                  <Autocomplete
-                    options={filteredPrefeituras}
-                    getOptionLabel={(option) => option.PRE_NOME}
-                    value={prefeituras.find((pref) => pref.PRE_ID === formData.prefeitura) || null}
-                    onChange={(_, newValue) => {
-                      setFormData((prev) => ({ ...prev, prefeitura: newValue ? newValue.PRE_ID : "" }));
-                    }}
-                    onInputChange={(_, newInputValue) => {
-                      setSearchPrefeitura(newInputValue);
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Prefeitura"
-                        fullWidth
-                        margin="normal"
-                        error={!!errors.prefeitura}
-                        helperText={errors.prefeitura}
-                        size="medium"
-                        sx={{ "& .MuiInputBase-root": { height: "56px" } }}
-                      />
-                    )}
-                  />
-                </Grid>
-
                 {/* Tipo de Veículo e Placa */}
                 <Grid item xs={12} sm={6}>
                   <TextField
@@ -357,4 +291,11 @@ export default function CadastroVeiculo() {
       </Box>
     </MainLayout>
   );
+}
+
+// Função para obter o ID da prefeitura do usuário logado
+function obterPrefeituraIdDoUsuario() {
+  // Implemente a lógica para obter o ID da prefeitura do usuário logado
+  // Exemplo: decodificar o token JWT ou fazer uma chamada à API
+  return 1; // Substitua pelo ID real da prefeitura
 }

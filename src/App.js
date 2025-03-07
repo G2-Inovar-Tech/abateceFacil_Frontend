@@ -5,9 +5,9 @@ import { AuthProvider } from "./context/AuthContext.js";
 import ProtectedRoute from "./components/ProtectedRoute.js";
 import Login from "./pages/Login.js";
 import NotFoundPage from "./pages/NotFound";
-import Home from "./pages/Home.js";
+import Home from "./pages/GestaoDosSaldosECartoesADM.js";
 import GerenciarPrefeituras from "./pages/GerenciarPrefeituras.js";
-import Relatorios from "./pages/Relatorios.js";
+import RelatoriosGeral from "./pages/RelatoriosGeral.js";
 import CadastroUsuario from "./pages/CadastroUsuario.js";
 import Cadastroprefeitura from "./pages/CadastroPrefeitura.js";
 import CadastroPosto from "./pages/CadastroPosto.js";
@@ -20,6 +20,14 @@ import CadastroVeiculo from "./pages/CadastroVeiculo.js";
 import ContratoPrefeitura from "./pages/ContratoPrefeitura.js";
 import VincularPostoContrato from "./pages/VincularPostoContrato.js";
 import VincularUsuarioPrefeitura from "./pages/VincularUsuarioPrefeitura.js";
+import VincularUsuarioPosto from "./pages/VincularUsuarioPosto.js";
+import CadastroEndereco from "./pages/CadastrarEndereco.js";
+import CadastroOrgao from "./pages/CadastrarOrgao.js";
+import GestaoCartao from "./pages/GestaoDosSaldosECartoesADM.js";
+import RelatoriosDetalhado from "./pages/RelatoriosDetalhado.js";
+import RelatoriosPosto from "./pages/RelatoriosPosto.js";
+import CadastrarVeiculoPre from "./pages/CadastroVeiculoPRE.js";
+
 
 
 function App() {
@@ -33,18 +41,24 @@ function App() {
 
           {/* Agrupamento de rotas protegidas - Rotas para ADM  */}
           <Route element={<ProtectedRoute allowedRoles={['ADM']} />}>
-            <Route path="/home" element={<Home />} />
-            <Route path="/gerenciar-prefeituras" element={<GerenciarPrefeituras />} />
-            <Route path="/relatorios" element={<Relatorios />} />
+           <Route path="/home" element={<Home />} />
+          {/*  <Route path="/gerenciar-prefeituras" element={<GerenciarPrefeituras />} />*/}
+            <Route path="/relatorio-geral" element={<RelatoriosGeral />} />
             <Route path="/cadastro-usuario" element={<CadastroUsuario />} />
             <Route path="/cadastro-prefeitura" element={<Cadastroprefeitura />} />
             <Route path="/cadastro-posto" element={<CadastroPosto />} />
-            <Route path="/configuracoes" element={<Configuracoes />} />
+          {/*  <Route path="/configuracoes" element={<Configuracoes />} />*/}
             <Route path="/cadastro-cartao" element={<CadastroCartao />} />
             <Route path="/cadastro-veiculo" element={<CadastroVeiculo />} />
             <Route path="/contrato-prefeitura" element={<ContratoPrefeitura />} />
+            <Route path="/vincular-prefeitura" element={<VincularUsuarioPrefeitura />} />
+            <Route path="/vincular-posto" element={<VincularUsuarioPosto />} />
             <Route path="/vincular-posto-contrato" element={<VincularPostoContrato />} />
-            <Route path="/vincular-usuario-prefeitura" element={<VincularUsuarioPrefeitura />} />
+            <Route path="/cadastro-endereco" element={<CadastroEndereco />}/>
+            <Route path= "/cadastro-orgao" element={<CadastroOrgao/>}/>
+            <Route path= "/gestao-saldos-cartoes-adm" element={<GestaoCartao/>}/>
+            <Route path="/relatorio-detalhado" element={<RelatoriosDetalhado />} />
+            <Route path="/relatorio-posto" element={<RelatoriosPosto />} />
 
 
           </Route>
@@ -54,6 +68,7 @@ function App() {
             <Route path="/home-prefeitura" element={<HomePrefeitura />} />
             <Route path="/gestao-saldos-cartoes" element={<GestaoDosSaldosECartoes />} />
             <Route path="/historico-prefeitura" element={<HistoricoPrefeitura />} />
+            <Route path="/cadastro-veiculo-pre" element={<CadastrarVeiculoPre />} />
           </Route>
 
           {/* Página 404 */}
