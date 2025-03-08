@@ -37,6 +37,7 @@ export default function CadastrarContrato() {
   const [saldosCombustiveis, setSaldosCombustiveis] = useState([]); // Estado para armazenar os saldos dos combustíveis
 
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const MAX_VALUE = 1e12;
 
   const combustiveis = [
     { key: "0", valor: "" },
@@ -100,40 +101,44 @@ export default function CadastrarContrato() {
   // Atualiza o estado do formulário e recalcula o saldo total
   const handleInputChange = (e, combustivelKey) => {
     const { value } = e.target;
-    let newValue = value;
+    let newValue = value.replace(/\D/g, ""); // Remove tudo que não é número
 
-    // Remove tudo que não é número
-    newValue = newValue.replace(/\D/g, "");
-
-    // Se houver mais de três dígitos, separa os últimos três como decimais
+    // Se houver mais de três dígitos, separa corretamente os milhares e decimais
     if (newValue.length > 3) {
-      const integerPart = newValue.slice(0, -3).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-      const decimalPart = newValue.slice(-3);
-      newValue = `${integerPart},${decimalPart}`;
+        let integerPart = newValue.slice(0, -3); // Parte inteira antes da vírgula
+        let decimalPart = newValue.slice(-3);    // Parte decimal (últimos 3 dígitos)
+
+        // Adiciona pontos como separadores de milhares
+        integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+        // Formata com vírgula entre a parte inteira e decimal
+        newValue = `${integerPart},${decimalPart}`;
     }
 
+    // Atualiza o estado com o valor formatado
     setFormData((prev) => ({
-      ...prev,
-      saldos: {
-        ...prev.saldos,
-        [combustivelKey]: newValue,
-      },
+        ...prev,
+        saldos: {
+            ...prev.saldos,
+            [combustivelKey]: newValue,
+        },
     }));
 
-    // Recalcula o saldo total
+    // Recalcula o saldo total (sem converter para número)
     const novosSaldos = { ...formData.saldos, [combustivelKey]: newValue };
     const total = Object.values(novosSaldos).reduce((acc, saldo) => {
-      if (saldo) {
-        const valorNumerico = parseFloat(saldo.replace(".", "").replace(",", "."));
-        return acc + (isNaN(valorNumerico) ? 0 : valorNumerico);
-      }
-      return acc;
+        if (saldo) {
+            // Remove pontos e vírgulas para garantir que o valor é numérico
+            const valorNumerico = parseFloat(saldo.replace(/\./g, "").replace(",", "."));
+            return acc + (isNaN(valorNumerico) ? 0 : valorNumerico);
+        }
+        return acc;
     }, 0);
 
     // Formata o total para ter 3 casas decimais
     const totalFormatado = parseFloat(total.toFixed(3)); // Garante 3 casas decimais
     setSaldoTotal(totalFormatado);
-  };
+};
 
   // Valida o formulário
   const validate = () => {
@@ -199,51 +204,62 @@ export default function CadastrarContrato() {
   };
 
   const confirmarEnvio = async () => {
-    fecharModalConfirmacao(); 
-  
-    
+    fecharModalConfirmacao();
+
     const requestData = {
-      CON_PRE_ID: Number(formData.prefeitura), 
-      COMBUSTIVEIS: Object.keys(formData.saldos)
-        .filter((key) => formData.saldos[key]) 
-        .map((key) => ({
-          COM_ID: Number(key), 
-          SALDO: parseFloat(formData.saldos[key].replace(".", "").replace(",", ".")), 
-        })),
+        CON_PRE_ID: Number(formData.prefeitura),
+        COMBUSTIVEIS: Object.keys(formData.saldos)
+            .filter((key) => formData.saldos[key])
+            .map((key) => {
+                const saldo = formData.saldos[key];
+                // Remove pontos e vírgulas para garantir que o valor é numérico
+                const saldoNumerico = saldo.replace(/\./g, "").replace(",", ".");
+
+                if (isNaN(parseFloat(saldoNumerico))) {
+                    console.error(`Saldo inválido para o combustível ${key}: ${saldo}`);
+                    return null;
+                }
+
+                return {
+                    COM_ID: Number(key),
+                    SALDO: saldoNumerico, // Envia como string
+                };
+            })
+            .filter(item => item !== null), // Filtra saldos inválidos
     };
-  
-    //console.log("Dados enviados para a API:", JSON.stringify(requestData, null, 2)); 
-  
-    try {
-      const response = await fetch(Constants.API_CADASTRAR_CONTRATO, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify(requestData),
-      });
-  
-     // console.log("Resposta da API:", response); // Log da resposta
-  
-      const responseData = await response.json();
-      //console.log("Resposta completa da API:", responseData); // Log da resposta completa
-  
-      if (response.ok) {
-        showSnackbar(responseData.message || "Contrato Cadastrado!", "success");
-        setFormData({ prefeitura: "", saldos: {} });
-        setSaldoTotal(0); // Reseta o saldo total após o envio
-      } else {
-        const errorMessages = responseData.erros
-          ? Object.values(responseData.erros).flat().join(", ")
-          : "Erro desconhecido";
-        showSnackbar(`Erro ao cadastrar Contrato: ${errorMessages}`, "error");
-      }
-    } catch (error) {
-      console.error("Erro ao enviar dados:", error);
-      showSnackbar("Erro ao conectar com o servidor.", "error");
+
+    if (requestData.COMBUSTIVEIS.length === 0) {
+        showSnackbar("Nenhum saldo válido para enviar.", "error");
+        return;
     }
-  };
+
+    try {
+        const response = await fetch(Constants.API_CADASTRAR_CONTRATO, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(requestData),
+        });
+
+        const responseData = await response.json();
+
+        if (response.ok) {
+            showSnackbar(responseData.message || "Contrato Cadastrado!", "success");
+            setFormData({ prefeitura: "", saldos: {} });
+            setSaldoTotal(0); // Reseta o saldo total após o envio
+        } else {
+            const errorMessages = responseData.erros
+                ? Object.values(responseData.erros).flat().join(", ")
+                : "Erro desconhecido";
+            showSnackbar(`Erro ao cadastrar Contrato: ${errorMessages}`, "error");
+        }
+    } catch (error) {
+        console.error("Erro ao enviar dados:", error);
+        showSnackbar("Erro ao conectar com o servidor.", "error");
+    }
+};
 
   return (
     <MainLayout>

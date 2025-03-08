@@ -1,6 +1,6 @@
 
 class Constants {
-    static API_BASE_URL = "https://test.api.g2abastecimento.com.br";
+    static API_BASE_URL = "https://ab.api.g2abastecimento.com.br";
 
     //Consultas
     static API_CONSULTAR_PREFEITURA = `${Constants.API_BASE_URL}/api/prefeitura`;

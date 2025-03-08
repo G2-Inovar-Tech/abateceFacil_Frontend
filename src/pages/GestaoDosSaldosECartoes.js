@@ -90,14 +90,14 @@ export default function GestaoDosSaldosECartoes() {
   ];
 
   const calcularTotal = () => {
-    if (!saldosCombustiveis || saldosCombustiveis.length === 0) return "0,000";
+    if (saldosCombustiveis.length === 0) return 0; // Retorna 0 se não houver saldos
   
-    const total = saldosCombustiveis
-      .reduce((total, saldo) => total + saldo.valor, 0)
-      .toFixed(3);
+    // Soma os valores de todos os combustíveis
+    const total = saldosCombustiveis.reduce((acc, combustivel) => {
+      return acc + combustivel.valor;
+    }, 0);
   
-   
-    return total.replace(".", ",");
+    return total; // Retorna o total como um número
   };
 
   const handleChangeSelectCombustivel = (event) => {
@@ -508,6 +508,24 @@ const adicionarRemoverSaldo = async () => {
     return numCartao.padStart(4, "0"); // Garante 4 dígitos, preenchendo com zeros à esquerda
   };
 
+  const formatarValorComPontos = (valor) => {
+    if (typeof valor !== "string") {
+      valor = valor.toString(); // Converte para string se não for
+    }
+  
+    // Remove qualquer caractere que não seja número ou ponto
+    valor = valor.replace(/[^\d.]/g, "");
+  
+    // Separa a parte inteira da parte decimal
+    let [parteInteira, parteDecimal] = valor.split(".");
+  
+    // Formata a parte inteira com pontos como separadores de milhar
+    parteInteira = parteInteira.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  
+    // Substitui o ponto decimal por vírgula
+    return parteDecimal ? `${parteInteira},${parteDecimal}` : parteInteira;
+  };
+
   return (
     <MainLayout titlePage="Gestão dos Cartões e Saldos" loading={loading}>
       <Box
@@ -534,60 +552,66 @@ const adicionarRemoverSaldo = async () => {
             {snackbarMessage}
           </Alert>
         </Snackbar>
-
         <Container maxWidth="md" sx={{ padding: "1% 1%" }}>
-          <Box sx={{ p: 4, justifyContent: "center", padding: 0 }}>
-            <Paper elevation={3} sx={{ p: 3, borderRadius: 2, padding: "0.5% 0%" }}>
-              <Typography variant="h6" align="center" fontWeight="bold">
-                Saldos Disponíveis por Combustível
-              </Typography>
-              <Divider sx={{ my: 2, borderRadius: "10px", borderBottomWidth: "medium" }} />
+  <Box sx={{ p: 4, justifyContent: "center", padding: 0 }}>
+    <Paper elevation={3} sx={{ p: 3, borderRadius: 2, padding: "0.5% 0%" }}>
+      <Typography variant="h6" align="center" fontWeight="bold">
+        Saldos Disponíveis por Combustível
+      </Typography>
+      <Divider sx={{ my: 2, borderRadius: "10px", borderBottomWidth: "medium" }} />
 
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+          gap: 2,
+          justifyContent: "center",
+          alignItems: "center",
+          textAlign: "center",
+        }}
+      >
+        {saldosCombustiveis.length > 0 ? (
+          saldosCombustiveis.map((combustivel, index) => {
+            // Formata o valor com pontos e vírgulas
+            const valorFormatado = formatarValorComPontos(combustivel.valor.toFixed(3));
+
+            return (
               <Box
+                key={index}
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
-                  gap: 2,
-                  justifyContent: "center",
-                  alignItems: "center",
+                  padding: "10px",
+                  borderRadius: "8px",
+                  backgroundColor: "#f5f5f5",
+                  boxShadow: "1px 1px 5px rgba(0, 0, 0, 0.1)",
                   textAlign: "center",
                 }}
               >
-                {saldosCombustiveis.length > 0 ? (
-                  saldosCombustiveis.map((combustivel, index) => (
-                    <Box
-                      key={index}
-                      sx={{
-                        padding: "10px",
-                        borderRadius: "8px",
-                        backgroundColor: "#f5f5f5",
-                        boxShadow: "1px 1px 5px rgba(0, 0, 0, 0.1)",
-                        textAlign: "center",
-                      }}
-                    >
-                      <Typography variant="body1" color="primary">
-                        {combustivel.tipo}
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        R$ {combustivel.valor.toFixed(3).replace('.', ',')}
-                      </Typography>
-                    </Box>
-                  ))
-                ) : (
-                  <Typography variant="body1" color="textSecondary">
-                    Nenhum saldo de combustível disponível.
-                  </Typography>
-                )}
+                <Typography variant="body1" color="primary">
+                  {combustivel.tipo}
+                </Typography>
+                <Typography variant="body1" fontWeight="bold">
+                  R$ {valorFormatado}
+                </Typography>
               </Box>
+            );
+          })
+        ) : (
+          <Typography variant="body1">Nenhum saldo disponível.</Typography>
+        )}
+      </Box>
 
-              <Divider sx={{ my: 2, borderRadius: "10px", borderBottomWidth: "medium" }} />
+      <Divider sx={{ my: 2, borderRadius: "10px", borderBottomWidth: "medium" }} />
 
-              <Typography variant="h6" align="center" fontWeight="bold">
-                Total: R$ {calcularTotal()}
-              </Typography>
-            </Paper>
-          </Box>
-        </Container>
+      <Typography variant="h6" align="center" fontWeight="bold">
+  Total: R$ {
+    typeof calcularTotal() === "number"
+      ? formatarValorComPontos(calcularTotal().toFixed(3))
+      : "0,000" // Valor padrão caso não seja um número
+  }
+</Typography>
+    </Paper>
+  </Box>
+</Container>
 
         <Container maxWidth="md" sx={{ padding: "3% 1%" }}>
           <Box
