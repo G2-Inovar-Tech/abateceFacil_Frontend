@@ -59,6 +59,7 @@ function App() {
             <Route path= "/gestao-saldos-cartoes-adm" element={<GestaoCartao/>}/>
             <Route path="/relatorio-detalhado" element={<RelatoriosDetalhado />} />
             <Route path="/relatorio-posto" element={<RelatoriosPosto />} />
+            
 
 
           </Route>

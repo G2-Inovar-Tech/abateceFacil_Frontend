@@ -100,8 +100,8 @@ export default function CadastroVeiculo() {
     const newErrors = {};
     if (!formData.prefeitura) newErrors.prefeitura = "Prefeitura é obrigatória.";
     //if (!formData.placa.trim()) newErrors.placa = "Placa é obrigatória.";
-    if (!formData.renavam.trim()) newErrors.renavam = "Renavam é obrigatório.";
-    if (!formData.chassi.trim()) newErrors.chassi = "Chassi é obrigatório.";
+    //if (!formData.renavam.trim()) newErrors.renavam = "Renavam é obrigatório.";
+   // if (!formData.chassi.trim()) newErrors.chassi = "Chassi é obrigatório.";
     if (!formData.capacidadeTanque.trim()) newErrors.capacidadeTanque = "Capacidade do tanque é obrigatória.";
     setErrors(newErrors);
 
@@ -244,6 +244,7 @@ export default function CadastroVeiculo() {
                     <MenuItem value="ÔNIBUS">ÔNIBUS</MenuItem>
                     <MenuItem value="CAMINHÃO">CAMINHÃO</MenuItem>
                     <MenuItem value="MÁQUINA">MÁQUINA</MenuItem>
+                    <MenuItem value="MOTO">MOTO</MenuItem>
                   </TextField>
                 </Grid>
                 <Grid item xs={12} sm={6}>
