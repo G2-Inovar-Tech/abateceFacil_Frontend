@@ -1,7 +1,7 @@
 
 class Constants {
-   static API_BASE_URL = "https://ab.api.g2abastecimento.com.br";
-    //static API_BASE_URL = "https://test.api.g2abastecimento.com.br";
+    //static API_BASE_URL = "https://ab.api.g2abastecimento.com.br";
+    static API_BASE_URL = "https://test.api.g2abastecimento.com.br";
 
     //Consultas
     static API_CONSULTAR_PREFEITURA = `${Constants.API_BASE_URL}/api/prefeitura`;
@@ -29,6 +29,7 @@ class Constants {
     static API_CADASTRAR_ABASTECIMENTO = `${Constants.API_BASE_URL}/api/abastecimentosPrefeitura`;
     static API_CADASTRAR_ENDERECO = `${Constants.API_BASE_URL}/api/enderecos`
     static API_CADASTRAR_ORGAO = `${Constants.API_BASE_URL}/api/orgaos`;
+    static API_CADASTRAR_MOTORISTA = `${Constants.API_BASE_URL}/api/motorista`;
 
     //Vincular
     static API_VINCULAR_CONTRATO_POSTO = `${Constants.API_BASE_URL}/api/contratoPosto`

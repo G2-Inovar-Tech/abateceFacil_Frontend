@@ -30,6 +30,8 @@ export default function CadastroVeiculo() {
   const [prefeituras, setPrefeituras] = useState([]);
   const [filteredPrefeituras, setFilteredPrefeituras] = useState([]);
   const [searchPrefeitura, setSearchPrefeitura] = useState("");
+  const [orgaos, setOrgaos] = useState([]);
+  const [orgaoSelecionado, setOrgaoSelecionado] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
@@ -69,6 +71,49 @@ export default function CadastroVeiculo() {
     }
   }, [searchPrefeitura, prefeituras]);
 
+  useEffect(() => {
+    const fetchOrgaos = async () => {
+      try {
+        const response = await fetch(`${Constants.API_CONSULTAR_ORGAO}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "*/*",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Dados recebidos da API:", data);
+          
+          // Processa os dados considerando os diferentes formatos possíveis
+          let orgaosArray = [];
+          if (Array.isArray(data)) {
+            orgaosArray = data;
+          } else if (data.orgaos && Array.isArray(data.orgaos)) {
+            orgaosArray = data.orgaos;
+          } else if (data.data && Array.isArray(data.data)) {
+            orgaosArray = data.data;
+          }
+          
+          console.log("Array de órgãos processado:", orgaosArray);
+          setOrgaos(orgaosArray);
+        } else {
+          console.error("Erro na resposta da API:", response.status);
+          showSnackbar("Erro ao buscar a lista de órgãos.", "error");
+          setOrgaos([]);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar órgãos:", error);
+        showSnackbar("Erro ao conectar com o servidor.", "error");
+        setOrgaos([]);
+      }
+    };
+
+    fetchOrgaos();
+  }, [token]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     let newValue = value;
@@ -99,10 +144,8 @@ export default function CadastroVeiculo() {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.prefeitura) newErrors.prefeitura = "Prefeitura é obrigatória.";
-    //if (!formData.placa.trim()) newErrors.placa = "Placa é obrigatória.";
-    //if (!formData.renavam.trim()) newErrors.renavam = "Renavam é obrigatório.";
-   // if (!formData.chassi.trim()) newErrors.chassi = "Chassi é obrigatório.";
-    if (!formData.capacidadeTanque.trim()) newErrors.capacidadeTanque = "Capacidade do tanque é obrigatória.";
+    if (!orgaoSelecionado) newErrors.orgao = "Órgão é obrigatório.";
+    //if (!formData.capacidadeTanque.trim()) newErrors.capacidadeTanque = "Capacidade do tanque é obrigatória.";
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
@@ -124,6 +167,7 @@ export default function CadastroVeiculo() {
         VEI_CAPACIDADE_TANQUE: parseFloat(formData.capacidadeTanque.replace(".", "").replace(",", ".")),
         VEI_STATUS: "ATIVO",
         VEI_PRE_ID: formData.prefeitura,
+        VEI_ORG_ID: orgaoSelecionado,
       };
 
       try {
@@ -165,6 +209,7 @@ export default function CadastroVeiculo() {
       capacidadeTanque: "",
       prefeitura: "",
     });
+    setOrgaoSelecionado("");
     setErrors({});
   };
 
@@ -208,6 +253,7 @@ export default function CadastroVeiculo() {
                     value={prefeituras.find((pref) => pref.PRE_ID === formData.prefeitura) || null}
                     onChange={(_, newValue) => {
                       setFormData((prev) => ({ ...prev, prefeitura: newValue ? newValue.PRE_ID : "" }));
+                      setOrgaoSelecionado(""); // Limpa o órgão selecionado quando mudar a prefeitura
                     }}
                     onInputChange={(_, newInputValue) => {
                       setSearchPrefeitura(newInputValue);
@@ -224,6 +270,62 @@ export default function CadastroVeiculo() {
                         sx={{ "& .MuiInputBase-root": { height: "56px" } }}
                       />
                     )}
+                  />
+                </Grid>
+
+                {/* Descrição do Veículo */}
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Descrição do Veículo"
+                    name="descricao"
+                    value={formData.descricao}
+                    onChange={handleInputChange}
+                    error={!!errors.descricao}
+                    helperText={errors.descricao}
+                    margin="normal"
+                    size="medium"
+                    sx={{ "& .MuiInputBase-root": { height: "56px" } }}
+                  />
+                </Grid>
+
+                {/* Campo de Órgão */}
+                <Grid item xs={12} sm={6}>
+                  <Autocomplete
+                    fullWidth
+                    options={orgaos}
+                    getOptionLabel={(option) => 
+                      option ? `${option.ORG_SIGLA} - ${option.ORG_DESCRICAO}` : ""
+                    }
+                    value={orgaos.find(orgao => orgao.ORG_ID === orgaoSelecionado) || null}
+                    onChange={(_, newValue) => {
+                      setOrgaoSelecionado(newValue ? newValue.ORG_ID : "");
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Órgão"
+                        fullWidth
+                        margin="normal"
+                        error={!!errors.orgao}
+                        helperText={errors.orgao}
+                        size="medium"
+                        sx={{ "& .MuiInputBase-root": { height: "56px" } }}
+                      />
+                    )}
+                    renderOption={(props, option) => (
+                      <li {...props}>
+                        <strong>{option.ORG_SIGLA}</strong> - {option.ORG_DESCRICAO}
+                      </li>
+                    )}
+                    filterOptions={(options, { inputValue }) => {
+                      const filterValue = inputValue.toLowerCase();
+                      return options.filter(
+                        option => 
+                          option.ORG_SIGLA.toLowerCase().includes(filterValue) ||
+                          option.ORG_DESCRICAO.toLowerCase().includes(filterValue)
+                      );
+                    }}
                   />
                 </Grid>
 
@@ -279,7 +381,7 @@ export default function CadastroVeiculo() {
                     inputProps={{ maxLength: 11 }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={8}>
+                <Grid item xs={12} sm={4}>
                   <TextField
                     fullWidth
                     label="Chassi"
@@ -295,22 +397,8 @@ export default function CadastroVeiculo() {
                   />
                 </Grid>
 
-                {/* Descrição e Capacidade do Tanque */}
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Descrição"
-                    name="descricao"
-                    value={formData.descricao}
-                    onChange={handleInputChange}
-                    error={!!errors.descricao}
-                    helperText={errors.descricao}
-                    margin="normal"
-                    size="medium"
-                    sx={{ "& .MuiInputBase-root": { height: "56px" } }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                {/* Capacidade do Tanque */}
+                <Grid item xs={12} sm={4}>
                   <TextField
                     fullWidth
                     label="Capacidade do Tanque (litros)"

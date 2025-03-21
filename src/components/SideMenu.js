@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Box,
@@ -13,6 +13,7 @@ import {
   Typography,
   useMediaQuery,
   Collapse,
+  useTheme,
 } from "@mui/material";
 import { useAuth } from "../context/AuthContext"; 
 import {
@@ -37,6 +38,7 @@ import {
   Dashboard,
   Assessment,
   BarChart,
+  BrandingWatermark,
 } from "@mui/icons-material";
 import iconeAbasteceFacil from "../assets/iconeAplicativoPrefeitura.png";
 
@@ -78,6 +80,12 @@ export default function SideMenu({ open, handleDrawerToggle }) {
       path: "/cadastro-veiculo-pre",  
       icon: <DirectionsCar />,
     },
+    {
+      text: "Cadastrar Motorista",
+      path: "/cadastro-motorista-pre",
+      icon: <BrandingWatermark />,
+    },
+   
 
     {
       text: "Historico",
@@ -95,6 +103,7 @@ export default function SideMenu({ open, handleDrawerToggle }) {
     { text: "Cadastrar Posto", path: "/cadastro-posto", icon: <BombaCombustivelIcone /> },
     { text: "Cadastrar Cartão", path: "/cadastro-cartao", icon: <AddCard /> },
     { text: "Cadastar Usuário", path: "/cadastro-usuario", icon: <CadastrarUsuariosIcon /> },
+    { text: "Cadastrar Motorista", path: "/cadastro-motorista-ADM", icon: <BrandingWatermark /> },
     { text: "Cadastrar Veículo", path: "/cadastro-veiculo", icon: <DirectionsCar /> },
     { text: "Cadastrar Endereço", path: "/cadastro-endereco", icon: <AddLocation />},
     { text: "Cadastrar Órgão", path: "/cadastro-orgao", icon: <CorporateFare/>},

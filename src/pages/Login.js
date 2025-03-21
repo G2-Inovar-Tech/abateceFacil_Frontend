@@ -63,19 +63,22 @@ export default function Login() {
       setLoading(false);
       return;
     }
-
+  
     try {
       const response = await axios.post(
         Constants.API_LOGIN,
         { login: formData.username, password: formData.password, tipo: "web" },
         { headers: { "Content-Type": "application/json", "Accept": "*/*" } }
       );
-
+  
       const { token, user } = response.data;
-
-      // Armazenar o token no localStorage
+  
+      // Armazenar o token e o ID da prefeitura no localStorage
       localStorage.setItem("token", token);
-
+      if (user.PRE_ID) {
+        localStorage.setItem("prefeituraId", user.PRE_ID);
+      }
+  
       // Chamar a função de login do contexto de autenticação
       login(false, user.USU_TIPO, {
         token,
@@ -84,10 +87,10 @@ export default function Login() {
         idAdm: user.ADM_ID ? `${user.ADM_ID}` : "",
         nomePrefeitura: user.PRE_NOME || "",
       });
-
+  
       // Redirecionar o usuário com base no perfil
       handleAccess(user.USU_TIPO);
-
+  
       // Exibir mensagem de sucesso
       showSnackbar("Login realizado com sucesso!", "success");
     } catch (error) {
@@ -97,7 +100,6 @@ export default function Login() {
       setLoading(false);
     }
   };
-
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleLogin();
   };

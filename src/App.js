@@ -27,7 +27,8 @@ import GestaoCartao from "./pages/GestaoDosSaldosECartoesADM.js";
 import RelatoriosDetalhado from "./pages/RelatoriosDetalhado.js";
 import RelatoriosPosto from "./pages/RelatoriosPosto.js";
 import CadastrarVeiculoPre from "./pages/CadastroVeiculoPRE.js";
-
+import CadastrarMotoristaADM from "./pages/CadastrarMotoristaADM.js";
+import CadastrarMotoristaPre from "./pages/CadastrarMotoristaPRE.js";
 
 
 function App() {
@@ -59,7 +60,7 @@ function App() {
             <Route path= "/gestao-saldos-cartoes-adm" element={<GestaoCartao/>}/>
             <Route path="/relatorio-detalhado" element={<RelatoriosDetalhado />} />
             <Route path="/relatorio-posto" element={<RelatoriosPosto />} />
-            
+            <Route path="/cadastro-motorista-ADM" element={<CadastrarMotoristaADM />} />
 
 
           </Route>
@@ -70,6 +71,7 @@ function App() {
             <Route path="/gestao-saldos-cartoes" element={<GestaoDosSaldosECartoes />} />
             <Route path="/historico-prefeitura" element={<HistoricoPrefeitura />} />
             <Route path="/cadastro-veiculo-pre" element={<CadastrarVeiculoPre />} />
+            <Route path="/cadastro-motorista-pre" element={<CadastrarMotoristaPre />} />
           </Route>
 
           {/* Página 404 */}
